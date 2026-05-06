@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Colors */
+  --color-omni-black: #0a0a0c;
+  --color-omni-black-lighter: #13141a;
+  --color-omni-blue: #0b1a38;
+  --color-omni-blue-light: #163264;
+  --color-omni-silver: #e2e8f0;
+  --color-omni-silver-dark: #94a3b8;
+  --color-omni-cyan: #00f0ff;
+  --color-omni-cyan-dim: rgba(0, 240, 255, 0.2);
+
+  /* Fonts */
+  --font-sans: var(--font-inter), sans-serif;
+  --font-heading: var(--font-syne), sans-serif;
+  --font-accent: var(--font-bebas), sans-serif;
+  --font-detail: var(--font-playfair), serif;
+
+  /* Box Shadows for "Glossy Bubbly Sticker" effect */
+  --shadow-sticker: 0 4px 0px 0px rgba(0,240,255,0.4), 0 0 20px rgba(0,240,255,0.2), inset 0 2px 4px rgba(255,255,255,0.2);
+  --shadow-sticker-hover: 0 6px 0px 0px rgba(0,240,255,0.5), 0 0 25px rgba(0,240,255,0.3), inset 0 3px 5px rgba(255,255,255,0.3);
+  --shadow-sticker-active: 0 0px 0px 0px rgba(0,240,255,0.6), 0 0 15px rgba(0,240,255,0.4), inset 0 1px 3px rgba(255,255,255,0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(11, 26, 56, 0.37);
+
+  /* Animations */
+  --animate-pulse-cyan: pulseCyan 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseCyan {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 15px var(--color-omni-cyan-dim);
+  }
+  50% {
+    opacity: .5;
+    box-shadow: 0 0 5px var(--color-omni-cyan-dim);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%) skewX(-20deg);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--color-omni-black);
+  color: var(--color-omni-silver);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  background: rgba(19, 20, 26, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-glass);
+}
