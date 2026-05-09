@@ -53,7 +53,7 @@ export default function IndependentSocial() {
     <section ref={sectionRef} className="panel relative min-h-screen w-full bg-[#FFFFFF] border-t border-[#0000FF]/10 overflow-hidden z-20 flex items-center py-16 md:py-20">
       
       {/* Background Spline Canvas */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-auto">
         <div className="absolute inset-x-0 -top-[10%] -bottom-[10%] scale-105 will-change-transform opacity-70 right-[-20%] md:right-[-10%] hidden md:block">
           <SplineScene2 className="h-full w-full ml-auto md:w-3/4 lg:w-2/3" />
         </div>
@@ -83,10 +83,10 @@ export default function IndependentSocial() {
         </svg>
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 md:px-24 flex flex-col md:flex-row items-center gap-16">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 md:px-24 flex flex-col md:flex-row items-center gap-16 pointer-events-none">
         
         {/* Left Content */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 pointer-events-auto">
           <h2 className="content-reveal font-['Inter',sans-serif] text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#0000FF] uppercase mb-8 leading-[0.9]">
             An Open <br/> Network.
           </h2>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Syne, Bebas_Neue, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -40,7 +41,9 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${syne.variable} ${bebasNeue.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-omni-black text-omni-silver font-sans overflow-x-hidden">{children}</body>
+      <body className="min-h-full flex flex-col bg-omni-black text-omni-silver font-sans overflow-x-hidden">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

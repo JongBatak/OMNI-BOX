@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class File extends Model
 {
     use HasUuids;
-    protected $fillable = ['user_id', 'project_id', 'name', 'type', 'size', 'path', 'url'];
+    protected $fillable = ['user_id', 'project_id', 'name', 'type', 'size', 'path', 'url', 'is_community_shared', 'is_starred'];
 
     public function user() { return $this->belongsTo(User::class); }
     public function project() { return $this->belongsTo(Project::class); }

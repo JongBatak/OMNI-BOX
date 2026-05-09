@@ -28,7 +28,7 @@ const PATHS = {
   }
 };
 
-export default function LiquidScrollEngine() {
+export default function LiquidScrollEngine({ isLoaded = true }: { isLoaded?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
@@ -64,8 +64,8 @@ export default function LiquidScrollEngine() {
       const chars = targetSection?.querySelectorAll(".split-char");
       const staggerEls = targetSection?.querySelectorAll(".entrance-stagger");
 
-      gsap.set(chars, { y: direction === 1 ? 100 : -100, opacity: 0 });
-      gsap.set(staggerEls, { y: direction === 1 ? 50 : -50, opacity: 0 });
+      gsap.set(chars || [], { y: direction === 1 ? 100 : -100, opacity: 0 });
+      gsap.set(staggerEls || [], { y: direction === 1 ? 50 : -50, opacity: 0 });
 
       const tl = gsap.timeline({
         onComplete: () => {
@@ -84,20 +84,25 @@ export default function LiquidScrollEngine() {
           duration: 0.7,
           ease: "sine.out",
         })
-        .to(chars, {
+      if (chars) {
+        tl.to(chars, {
           y: 0,
           opacity: 1,
           stagger: 0.02,
           duration: 0.8,
-          ease: "power4.out",
-        }, "-=0.7")
-        .to(staggerEls, {
+          ease: "expo.out",
+        }, "-=0.4");
+      }
+      
+      if (staggerEls) {
+        tl.to(staggerEls, {
           y: 0,
           opacity: 1,
           stagger: 0.1,
-          duration: 1,
-          ease: "power3.out"
-        }, "-=0.8");
+          duration: 0.8,
+          ease: "power3.out",
+        }, "-=0.6");
+      }
     };
 
     const observer = Observer.create({
@@ -154,7 +159,7 @@ export default function LiquidScrollEngine() {
         ref={(el) => { sectionsRef.current[0] = el; }}
         className="absolute inset-0 w-full h-full will-change-[clip-path,transform]"
       >
-        <HeroSection />
+        <HeroSection isLoaded={isLoaded} splinePhase="ready" />
       </section>
 
       {/* ============================== */}

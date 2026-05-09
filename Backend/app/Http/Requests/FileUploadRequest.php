@@ -7,8 +7,8 @@ class FileUploadRequest extends FormRequest
     public function authorize() { return true; }
     public function rules() {
         return [
-            'file' => 'required|file|max:51200',
-            'type' => 'required|in:SocialData,Webview,Code,Binary',
+            'file' => 'required|file|max:512000',
+            'type' => 'required|string',
             'project_id' => 'nullable|exists:projects,id',
         ];
     }

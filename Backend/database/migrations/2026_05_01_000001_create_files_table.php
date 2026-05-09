@@ -13,10 +13,11 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('project_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
-            $table->enum('type', ['SocialData', 'Webview', 'Code', 'Binary']);
+            $table->string('type');
             $table->unsignedBigInteger('size'); // in bytes
             $table->string('path');
             $table->string('url')->nullable();
+            $table->boolean('is_community_shared')->default(false);
             $table->timestamps();
         });
     }

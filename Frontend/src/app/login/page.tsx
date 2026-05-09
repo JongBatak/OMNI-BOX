@@ -1,11 +1,48 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Lock, ArrowRight } from "lucide-react";
+import { User, Lock, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
 import { StickerInput } from "@/components/ui/StickerInput";
 import { GlossyButton } from "@/components/ui/GlossyButton";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If already authenticated, redirect
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  if (!authLoading && isAuthenticated) {
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      router.push("/dashboard");
+    } else {
+      setError(result.error ?? "Login failed. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main className="min-h-screen flex items-center justify-center p-4 sm:p-8">
       {/* Background glow */}
@@ -32,6 +69,19 @@ export default function LoginPage() {
           <p className="text-omni-silver-dark font-sans">Enter the next dimension of storage.</p>
         </motion.div>
 
+        {/* Error Banner */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            className="mb-6 flex items-start gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm"
+          >
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+
         <motion.form
           initial="hidden"
           animate="visible"
@@ -43,14 +93,18 @@ export default function LoginPage() {
             }
           }}
           className="flex flex-col gap-6"
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleSubmit}
         >
           <motion.div variants={{ hidden: { x: -20, opacity: 0 }, visible: { x: 0, opacity: 1 } }}>
             <StickerInput
               label="Username or Email"
-              type="text"
+              type="email"
               placeholder="commander@omnibox.io"
               icon={<User className="w-5 h-5" />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
             />
           </motion.div>
 
@@ -60,6 +114,10 @@ export default function LoginPage() {
               type="password"
               placeholder="••••••••"
               icon={<Lock className="w-5 h-5" />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
             />
             <div className="flex justify-end mt-2">
               <a href="#" className="text-sm text-omni-cyan hover:underline hover:text-white transition-colors">
@@ -69,8 +127,21 @@ export default function LoginPage() {
           </motion.div>
 
           <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="mt-4">
-            <GlossyButton className="w-full" glowColor="cyan" type="submit">
-              Initialize Uplink <ArrowRight className="w-5 h-5" />
+            <GlossyButton
+              className="w-full"
+              glowColor="cyan"
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" /> Connecting...
+                </>
+              ) : (
+                <>
+                  Initialize Uplink <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </GlossyButton>
           </motion.div>
         </motion.form>

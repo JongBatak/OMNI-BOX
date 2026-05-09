@@ -52,7 +52,7 @@ export default function LayeredScrollEngine() {
       {/* Section 1 - z-10 */}
       <section
         ref={(el) => {
-          curtainRefs.current[0] = el;
+          curtainRefs.current[0] = el as HTMLDivElement | null;
         }}
         className="relative h-screen w-full z-10 overflow-hidden bg-blue-950"
       >
@@ -66,7 +66,7 @@ export default function LayeredScrollEngine() {
       {/* Section 2 - z-20 */}
       <section
         ref={(el) => {
-          curtainRefs.current[1] = el;
+          curtainRefs.current[1] = el as HTMLDivElement | null;
         }}
         className="relative h-screen w-full z-20 overflow-hidden bg-black"
       >
@@ -79,7 +79,7 @@ export default function LayeredScrollEngine() {
       {/* Section 3 - z-30 */}
       <section
         ref={(el) => {
-          curtainRefs.current[2] = el;
+          curtainRefs.current[2] = el as HTMLDivElement | null;
         }}
         className="relative h-screen w-full z-30 overflow-hidden bg-gray-800"
       >

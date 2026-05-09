@@ -31,20 +31,36 @@ export default function HeroSection({ isLoaded, splinePhase, onSplineLoad }: Her
       duration: 1.5,
       ease: 'expo.out',
       // Delay to allow the loading curtain to completely rise first
-      delay: 1.6
+      delay: 0.5
     });
 
     // Staggered massive text reveal
-    // Sliding up seamlessly AFTER the Blue Curtain rises!
-    gsap.fromTo(q('.hero-word'), 
-      { yPercent: 110, rotateZ: 3 },
-      { yPercent: 0, rotateZ: 0, duration: 1.5, stagger: 0.05, ease: 'power4.out', delay: 1.6 }
+    // Cinematic Blur & Scale reveal seamlessly AFTER the Blue Curtain rises!
+    gsap.fromTo(q('.hero-word'),
+      { 
+        yPercent: 120, 
+        rotateZ: 4, 
+        scale: 0.9,
+        filter: 'blur(15px)',
+        opacity: 0 
+      },
+      { 
+        yPercent: 0, 
+        rotateZ: 0, 
+        scale: 1,
+        filter: 'blur(0px)',
+        opacity: 1,
+        duration: 2, 
+        stagger: 0.15, 
+        ease: 'power4.out', 
+        delay: 0.5 
+      }
     );
 
     // Largo.studio-style Architectutal SVG Line drawing
     gsap.fromTo(q('.hero-svg-line'),
       { strokeDasharray: 100, strokeDashoffset: 100 },
-      { strokeDashoffset: 0, duration: 2.5, ease: 'expo.inOut', stagger: 0.1, delay: 1.8 }
+      { strokeDashoffset: 0, duration: 2.5, ease: 'expo.inOut', stagger: 0.1, delay: 0.7 }
     );
 
     // Parallax effect for Spline background
@@ -63,7 +79,7 @@ export default function HeroSection({ isLoaded, splinePhase, onSplineLoad }: Her
 
   return (
     <section ref={sectionRef} className="panel relative h-screen w-full bg-[#FFFFFF] overflow-hidden text-[#0000FF] z-10 transition-colors duration-500">
-      
+
       {/* 3D Pre-loaded Spline. Only allowed to render & parse AFTER SVG draws (splinePhase !== 'idle') */}
       <div className="hero-spline-wrapper absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out opacity-100">
         <div className="hero-spline-bg absolute inset-x-0 -top-[10%] -bottom-[10%] scale-105 will-change-transform">
@@ -85,7 +101,7 @@ export default function HeroSection({ isLoaded, splinePhase, onSplineLoad }: Her
           {/* Right Vertical framing line */}
           <line x1="92%" y1="0" x2="92%" y2="100%" stroke="#FFFFFF" strokeWidth="1" pathLength="100" className="hero-svg-line" fill="none" />
         </svg>
-        
+
         {/* Corner Accents */}
         <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
           {/* Top Right Cross */}
@@ -99,7 +115,7 @@ export default function HeroSection({ isLoaded, splinePhase, onSplineLoad }: Her
         <div className="font-['Inter',sans-serif] font-black text-xl md:text-2xl tracking-tighter text-[#0000FF]">
           OMNI
         </div>
-        
+
         <div className="mt-16 space-y-2">
           {/* Sidebar decorative lines */}
           <div className="w-8 h-px bg-[#0000FF]/50" />
@@ -119,7 +135,7 @@ export default function HeroSection({ isLoaded, splinePhase, onSplineLoad }: Her
           <span className="block overflow-hidden"><span className="hero-word block will-change-transform transform-gpu origin-bottom-left text-[#0000FF]/40 pointer-events-auto">FOOTPRINT.</span></span>
         </h1>
       </div>
-      
+
     </section>
   );
 }

@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers;
+use App\Models\File;
 use App\Http\Requests\FileUploadRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -24,5 +25,33 @@ class FileController extends Controller
         $metrics->increment('storage_used', $file->getSize());
 
         return response()->json(['data' => $dbFile], 201);
+    }
+
+    public function getRecentFiles(Request $request)
+    {
+        $files = File::where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function ($file) {
+                $file->url = asset('storage/' . $file->path);
+                return $file;
+            });
+
+        return response()->json($files);
+    }
+
+    public function getStarredFiles(Request $request)
+    {
+        $files = File::where('user_id', $request->user()->id)
+            ->where('is_starred', true)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($file) {
+                $file->url = asset('storage/' . $file->path);
+                return $file;
+            });
+
+        return response()->json($files);
     }
 }

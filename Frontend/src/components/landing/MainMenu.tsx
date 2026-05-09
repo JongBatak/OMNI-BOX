@@ -62,8 +62,8 @@ export default function MainMenu({ isLoaded = true }: { isLoaded?: boolean }) {
   const menuItems = [
     { link: '/dashboard', text: 'Dashboard', image: 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&q=80&w=800' },
     { link: '/login', text: 'Login', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800' },
-    { link: '#cta', text: 'Purchase', image: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?auto=format&fit=crop&q=80&w=800' },
-    { link: '#', text: 'Community Gallery', image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=800' },
+    { link: '/register', text: 'Register', image: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?auto=format&fit=crop&q=80&w=800' },
+    // { link: '#', text: 'Community Gallery', image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=800' },
   ];
 
   return (

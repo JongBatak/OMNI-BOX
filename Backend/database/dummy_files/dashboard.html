@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gunting Batu Kertas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Gunting Batu Kertas</h1>
+        
+        <div class="player-info">
+            <h2>Halo, <span id="playerName"></span>!</h2>
+            <div class="score-board">
+                <h3>Score: <span id="score">0</span></h3>
+                <p class="target">Target: 1,000,000 poin untuk klaim flag</p>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <h2>Pilih Pilihanmu!</h2>
+            <div class="choices">
+                <button class="choice-btn" onclick="play('batu')">
+                    <span class="emoji">✊</span>
+                    <span>Batu</span>
+                </button>
+                <button class="choice-btn" onclick="play('gunting')">
+                    <span class="emoji">✌️</span>
+                    <span>Gunting</span>
+                </button>
+                <button class="choice-btn" onclick="play('kertas')">
+                    <span class="emoji">✋</span>
+                    <span>Kertas</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="result-area" id="resultArea" style="display:none;">
+            <h3 id="resultText"></h3>
+            <p id="resultDetail"></p>
+        </div>
+
+        <div class="flag-area">
+            <button class="flag-btn" onclick="claimFlag()">🚩 Klaim Flag</button>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const playerName = localStorage.getItem('playerName');
+        if (!playerName) {
+            window.location.href = '/';
+        }
+        document.getElementById('playerName').textContent = playerName;
+
+        function updateScore() {
+            fetch('/get_score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: playerName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.score !== undefined) {
+                    document.getElementById('score').textContent = data.score.toLocaleString();
+                }
+            });
+        }
+
+        function play(pilihan) {
+            fetch('/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: playerName, pilihan })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('message').textContent = data.error;
+                    return;
+                }
+
+                const resultArea = document.getElementById('resultArea');
+                const resultText = document.getElementById('resultText');
+                const resultDetail = document.getElementById('resultDetail');
+
+                resultArea.style.display = 'block';
+                
+                if (data.result === 'menang') {
+                    resultText.textContent = '🎉 Kamu Menang!';
+                    resultText.style.color = '#4CAF50';
+                } else if (data.result === 'kalah') {
+                    resultText.textContent = '😢 Kamu Kalah!';
+                    resultText.style.color = '#f44336';
+                } else {
+                    resultText.textContent = '🤝 Seri!';
+                    resultText.style.color = '#FF9800';
+                }
+
+                resultDetail.textContent = `Kamu: ${data.pilihan_kamu} | Komputer: ${data.pilihan_komputer}`;
+                document.getElementById('score').textContent = data.score.toLocaleString();
+
+                setTimeout(() => {
+                    resultArea.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                document.getElementById('message').textContent = 'Error: ' + error;
+            });
+        }
+
+        function claimFlag() {
+            fetch('/claim_flag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: playerName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('🎉 ' + data.message + '\n\nFlag: ' + data.flag);
+                    document.getElementById('score').textContent = '0';
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        }
+
+        updateScore();
+    </script>
+</body>
+</html>

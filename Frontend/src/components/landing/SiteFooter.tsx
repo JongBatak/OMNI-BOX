@@ -41,11 +41,14 @@ export default function SiteFooter() {
                 <span className="absolute -bottom-2 left-0 w-1/2 h-[1px] bg-[#0000FF] opacity-50" />
               </h3>
               <ul className="space-y-4">
-                {['Dashboard', 'Purchase', 'Community Gallery'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-white/50 text-sm hover:text-white transition-colors relative group duration-300 flex items-center">
+                {[
+                  { name: 'Dashboard', link: '/dashboard' },
+                  // { name: 'Community Gallery', link: '#' }
+                ].map((item) => (
+                  <li key={item.name}>
+                    <a href={item.link} className="text-white/50 text-sm hover:text-white transition-colors relative group duration-300 flex items-center">
                       <span className="absolute -left-4 opacity-0 group-hover:opacity-100 group-hover:left-0 text-[#0000FF] transition-all duration-300">\u203A</span>
-                      <span className="group-hover:pl-4 transition-all duration-300 inline-block">{item}</span>
+                      <span className="group-hover:pl-4 transition-all duration-300 inline-block">{item.name}</span>
                     </a>
                   </li>
                 ))}
@@ -59,11 +62,15 @@ export default function SiteFooter() {
                 <span className="absolute -bottom-2 left-0 w-1/2 h-[1px] bg-[#0000FF] opacity-50" />
               </h3>
               <ul className="space-y-4">
-                {['Login', 'Sign Up', 'Reset Password'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-white/50 text-sm hover:text-white transition-colors relative group duration-300 flex items-center">
+                {[
+                  { name: 'Login', link: '/login' },
+                  { name: 'Register', link: '/register' },
+                  { name: 'Admin', link: '/admin' }
+                ].map((item) => (
+                  <li key={item.name}>
+                    <a href={item.link} className="text-white/50 text-sm hover:text-white transition-colors relative group duration-300 flex items-center">
                       <span className="absolute -left-4 opacity-0 group-hover:opacity-100 group-hover:left-0 text-[#0000FF] transition-all duration-300">\u203A</span>
-                      <span className="group-hover:pl-4 transition-all duration-300 inline-block">{item}</span>
+                      <span className="group-hover:pl-4 transition-all duration-300 inline-block">{item.name}</span>
                     </a>
                   </li>
                 ))}

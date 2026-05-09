@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Auth\AuthenticationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,7 +19,25 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\IsAdmin::class,
             'customer' => \App\Http\Middleware\IsCustomer::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Rate limiting — return a clear JSON 429 for the frontend
+        $exceptions->renderable(function (ThrottleRequestsException $e) {
+            return response()->json([
+                'message' => 'Too many requests. Please try again in a minute.',
+            ], 429);
+        });
+
+        // Unauthenticated — return JSON 401 instead of redirecting to /login
+        $exceptions->renderable(function (AuthenticationException $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated. Please log in.',
+                ], 401);
+            }
+        });
     })->create();

@@ -55,8 +55,8 @@ export default function VelocityMarquee() {
       start: 'top bottom',
       end: 'bottom top',
       onUpdate: (self) => {
-        let velocity = self.getVelocity();
-        let direction = self.direction; // 1 (bawah), -1 (atas)
+        const velocity = self.getVelocity();
+        const direction = self.direction; // 1 (bawah), -1 (atas)
 
         // Sensitivitas dinaikkan (dibagi 150) agar lebih responsif terhadap scroll kecil
         let targetSpeed = 1 + Math.abs(velocity / 150);

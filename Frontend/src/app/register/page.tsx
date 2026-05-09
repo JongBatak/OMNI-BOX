@@ -1,17 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Mail, Lock, Shield } from "lucide-react";
+import { User, Mail, Lock, Shield, Loader2, AlertTriangle } from "lucide-react";
 import { StickerInput } from "@/components/ui/StickerInput";
 import { GlossyButton } from "@/components/ui/GlossyButton";
 import { R4XRobot } from "@/components/ui/R4XRobot";
+import { useAuth } from "@/context/AuthContext";
 
 type RobotStatus = "idle" | "typing" | "weak-password" | "strong-password";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register, isAuthenticated, isLoading: authLoading } = useAuth();
+
   const [robotStatus, setRobotStatus] = useState<RobotStatus>("idle");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If already authenticated, redirect
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  if (!authLoading && isAuthenticated) {
+    return null;
+  }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -26,7 +47,7 @@ export default function RegisterPage() {
   };
 
   const handleFocus = (field: string) => {
-    if (field === "password") {
+    if (field === "password" || field === "confirm-password") {
       setRobotStatus(password.length >= 8 ? "strong-password" : "weak-password");
     } else {
       setRobotStatus("typing");
@@ -35,6 +56,32 @@ export default function RegisterPage() {
 
   const handleBlur = () => {
     setRobotStatus("idle");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Client-side pre-validation
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== passwordConfirmation) {
+      setError("Password confirmation does not match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const result = await register(name, email, password, passwordConfirmation);
+
+    if (result.success) {
+      router.push("/dashboard");
+    } else {
+      setError(result.error ?? "Registration failed. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -80,14 +127,31 @@ export default function RegisterPage() {
             <p className="text-omni-silver-dark font-sans">Establish your identity to begin.</p>
           </div>
 
-          <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+          {/* Error Banner */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="mb-6 flex items-start gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm"
+            >
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <StickerInput
               label="Commander Name"
               type="text"
               placeholder="John Doe"
               icon={<User className="w-5 h-5" />}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               onFocus={() => handleFocus("name")}
               onBlur={handleBlur}
+              required
+              autoComplete="name"
             />
 
             <StickerInput
@@ -95,8 +159,12 @@ export default function RegisterPage() {
               type="email"
               placeholder="commander@omnibox.io"
               icon={<Mail className="w-5 h-5" />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               onFocus={() => handleFocus("email")}
               onBlur={handleBlur}
+              required
+              autoComplete="email"
             />
 
             <StickerInput
@@ -108,11 +176,39 @@ export default function RegisterPage() {
               onChange={handlePasswordChange}
               onFocus={() => handleFocus("password")}
               onBlur={handleBlur}
+              required
+              autoComplete="new-password"
+            />
+
+            <StickerInput
+              label="Confirm Password"
+              type="password"
+              placeholder="••••••••"
+              icon={<Shield className="w-5 h-5" />}
+              value={passwordConfirmation}
+              onChange={(e) => setPasswordConfirmation(e.target.value)}
+              onFocus={() => handleFocus("confirm-password")}
+              onBlur={handleBlur}
+              required
+              autoComplete="new-password"
             />
 
             <div className="mt-4">
-              <GlossyButton className="w-full" glowColor="blue" type="submit">
-                Initialize Account <Shield className="w-5 h-5 ml-2" />
+              <GlossyButton
+                className="w-full"
+                glowColor="blue"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Processing...
+                  </>
+                ) : (
+                  <>
+                    Initialize Account <Shield className="w-5 h-5 ml-2" />
+                  </>
+                )}
               </GlossyButton>
             </div>
           </form>
