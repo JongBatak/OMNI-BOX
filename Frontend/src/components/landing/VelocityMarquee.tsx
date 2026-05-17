@@ -277,11 +277,19 @@ export default function TextMaskTransition() {
               {/* OMNIBOX TEXT MASK */}
               <text x="50%" y="180" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '50px', letterSpacing: '0.25em' }}>OMNIBOX</text>
               {/* LOGO MASK */}
-              <g stroke="black" strokeWidth="14" strokeLinejoin="round" fill="none">
-                <polygon points="500,290 610,330 610,470 500,540 380,470 380,330" />
-                <line x1="500" y1="290" x2="500" y2="400" /><line x1="610" y1="470" x2="500" y2="400" />
-                <line x1="380" y1="470" x2="500" y2="400" /><line x1="610" y1="330" x2="500" y2="400" />
-                <line x1="380" y1="330" x2="500" y2="400" /><line x1="500" y1="540" x2="500" y2="400" />
+              <g stroke="black" strokeWidth="14" strokeLinejoin="round" strokeLinecap="round" fill="none">
+                {/* Outer Hexagon / Isometrik Kotak Frame */}
+                <polygon points="500,260 620,330 620,470 500,540 380,470 380,330" />
+                
+                {/* Garis Struktur Interior Pembentuk Kubus 3D */}
+                <line x1="500" y1="260" x2="500" y2="400" />
+                <line x1="620" y1="470" x2="500" y2="400" />
+                <line x1="380" y1="470" x2="500" y2="400" />
+                
+                {/* Jaringan facet tambahan untuk mempertegas siluet wireframe premium */}
+                <line x1="620" y1="330" x2="500" y2="400" />
+                <line x1="380" y1="330" x2="500" y2="400" />
+                <line x1="500" y1="540" x2="500" y2="400" />
               </g>
               <circle cx="500" cy="400" r="25" fill="black" />
               {/* FORMATS TEXT MASK */}
