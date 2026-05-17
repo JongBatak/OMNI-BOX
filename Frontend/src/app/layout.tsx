@@ -39,9 +39,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // h-full antialiased dibiarkan karena aman
       className={`${inter.variable} ${syne.variable} ${bebasNeue.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-omni-black text-omni-silver font-sans overflow-x-hidden">
+      {/* FIX PENTING: overflow-x-hidden DIHAPUS dari <body>.
+        Ini yang bikin GSAP Pinning lu jebol/mati dari tadi!
+      */}
+      <body className="min-h-full flex flex-col bg-omni-black text-omni-silver font-sans">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
