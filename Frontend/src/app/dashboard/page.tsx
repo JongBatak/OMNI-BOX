@@ -39,7 +39,7 @@ const MyStorageView = ({ onFileClick }: { onFileClick: (file: WorkspaceFile) => 
     const fetchRecent = async () => {
       try {
         const token = localStorage.getItem('omnibox_token');
-        const res = await fetch('http://localhost:8000/api/v1/files/recent', {
+        const res = await fetch('/api/v1/files/recent', {
           headers: {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
@@ -164,7 +164,7 @@ const PersonalGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFil
     const fetchFiles = async () => {
       try {
         const token = localStorage.getItem('omnibox_token');
-        const res = await fetch('http://localhost:8000/api/v1/gallery/personal', {
+        const res = await fetch('/api/v1/gallery/personal', {
           headers: {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
@@ -236,7 +236,7 @@ const CommunityGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFi
     const fetchFiles = async () => {
       try {
         const token = localStorage.getItem('omnibox_token');
-        const res = await fetch('http://localhost:8000/api/v1/gallery/community', {
+        const res = await fetch('/api/v1/gallery/community', {
           headers: {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
@@ -328,7 +328,7 @@ const StarredView = ({ onFileClick }: { onFileClick: (file: WorkspaceFile) => vo
     const fetchStarred = async () => {
       try {
         const token = localStorage.getItem('omnibox_token');
-        const res = await fetch('http://localhost:8000/api/v1/files/starred', {
+        const res = await fetch('/api/v1/files/starred', {
           headers: {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
@@ -561,7 +561,7 @@ export default function CustomerDashboard() {
       
       formData.append('type', fileType);
       
-      const res = await fetch('http://localhost:8000/api/v1/files', {
+      const res = await fetch('/api/v1/files', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -592,7 +592,7 @@ export default function CustomerDashboard() {
     const fetchMetrics = async () => {
       try {
         const token = localStorage.getItem('omnibox_token');
-        const res = await fetch('http://localhost:8000/api/user/metrics', {
+        const res = await fetch('/api/user/metrics', {
           headers: {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
