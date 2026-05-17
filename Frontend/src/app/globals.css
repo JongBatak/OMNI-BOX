@@ -18,9 +18,9 @@
   --font-detail: var(--font-playfair), serif;
 
   /* Box Shadows for "Glossy Bubbly Sticker" effect */
-  --shadow-sticker: 0 4px 0px 0px rgba(0,240,255,0.4), 0 0 20px rgba(0,240,255,0.2), inset 0 2px 4px rgba(255,255,255,0.2);
-  --shadow-sticker-hover: 0 6px 0px 0px rgba(0,240,255,0.5), 0 0 25px rgba(0,240,255,0.3), inset 0 3px 5px rgba(255,255,255,0.3);
-  --shadow-sticker-active: 0 0px 0px 0px rgba(0,240,255,0.6), 0 0 15px rgba(0,240,255,0.4), inset 0 1px 3px rgba(255,255,255,0.1);
+  --shadow-sticker: 0 4px 0px 0px rgba(0, 240, 255, 0.4), 0 0 20px rgba(0, 240, 255, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  --shadow-sticker-hover: 0 6px 0px 0px rgba(0, 240, 255, 0.5), 0 0 25px rgba(0, 240, 255, 0.3), inset 0 3px 5px rgba(255, 255, 255, 0.3);
+  --shadow-sticker-active: 0 0px 0px 0px rgba(0, 240, 255, 0.6), 0 0 15px rgba(0, 240, 255, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.1);
   --shadow-glass: 0 8px 32px 0 rgba(11, 26, 56, 0.37);
 
   /* Animations */
@@ -28,10 +28,13 @@
 }
 
 @keyframes pulseCyan {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     box-shadow: 0 0 15px var(--color-omni-cyan-dim);
   }
+
   50% {
     opacity: .5;
     box-shadow: 0 0 5px var(--color-omni-cyan-dim);
@@ -67,4 +70,24 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: var(--shadow-glass);
+}
+
+
+/* Spline Canvas Fixes */
+/* Tembak mati paksa semua logo/anchor tag di dalam wrapper Spline */
+.spline-watermark-hider a,
+
+/* Bersihin canvas biar nggak ada outline atau border saat di-klik */
+.spline-watermark-hider canvas {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+
+  /* THE FIX: Allow scroll events to pass through the canvas */
+  pointer-events: auto !important;
+}
+
+/* THE FIX: Ensure the wrapper doesn't block scroll */
+.spline-watermark-hider {
+  touch-action: pan-y !important;
+  /* Allow vertical scrolling */
 }

@@ -2,17 +2,20 @@
 
 import React, { useRef } from "react";
 import gsap from "gsap";
-import { Observer } from "gsap/Observer";
 import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+
 import HeroSection from './HeroSection';
 import IndependentSocial from './IndependentSocial';
 import SocialDataSection from './SocialDataSection';
 import VelocityMarquee from './VelocityMarquee';
 import CtaSection from './CtaSection';
-import SiteFooter from './SiteFooter';
+import EpicFooter from './EpicFooter';
+import LaserTransition from './LaserTransition';
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(Observer, useGSAP);
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother, useGSAP);
 }
 
 const PATHS = {
@@ -20,191 +23,128 @@ const PATHS = {
     start: "M 0 1 C 0.33 1, 0.66 1, 1 1 L 1 1 L 0 1 Z",
     mid: "M 0 0.5 C 0.33 0.2, 0.66 0.8, 1 0.5 L 1 1 L 0 1 Z",
     end: "M 0 0 C 0.33 0, 0.66 0, 1 0 L 1 1 L 0 1 Z",
-  },
-  up: {
-    start: "M 0 0 C 0.33 0, 0.66 0, 1 0 L 1 0 L 0 0 Z",
-    mid: "M 0 0.5 C 0.33 0.8, 0.66 0.2, 1 0.5 L 1 0 L 0 0 Z",
-    end: "M 0 1 C 0.33 1, 0.66 1, 1 1 L 1 0 L 0 0 Z",
   }
 };
 
 export default function LiquidScrollEngine({ isLoaded = true }: { isLoaded?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
-  const pathRefs = useRef<(SVGPathElement | null)[]>([]);
-
-  const isAnimating = useRef(false);
-  const currentIndex = useRef(0);
-  const TOTAL_SLIDES = 5;
+  const pathRef = useRef<SVGPathElement>(null);
 
   useGSAP(() => {
-    gsap.set(sectionsRef.current, { zIndex: 1, clipPath: (i) => `url(#liquid-clip-${i})` });
-    gsap.set(sectionsRef.current[0], { zIndex: 5 });
-
-    pathRefs.current.forEach((path, i) => {
-      gsap.set(path, { attr: { d: i === 0 ? PATHS.down.end : PATHS.down.start } });
+    // 1. Initialize ScrollSmoother (Provides buttery smooth scroll for the whole page)
+    let smoother = ScrollSmoother.create({
+      wrapper: "#smooth-wrapper",
+      content: "#smooth-content",
+      smooth: 1.5,
+      effects: true,
     });
 
-    const gotoSection = (index: number, direction: number) => {
-      if (index < 0 || index >= TOTAL_SLIDES || isAnimating.current) return;
-      isAnimating.current = true;
-
-      const currentSection = sectionsRef.current[currentIndex.current];
-      const targetSection = sectionsRef.current[index];
-      const targetPath = pathRefs.current[index];
-
-      gsap.set(sectionsRef.current, { zIndex: 1 });
-      gsap.set(currentSection, { zIndex: 2 });
-      gsap.set(targetSection, { zIndex: 5 });
-
-      const paths = direction === 1 ? PATHS.down : PATHS.up;
-
-      gsap.set(targetPath, { attr: { d: paths.start } });
-
-      const chars = targetSection?.querySelectorAll(".split-char");
-      const staggerEls = targetSection?.querySelectorAll(".entrance-stagger");
-
-      gsap.set(chars || [], { y: direction === 1 ? 100 : -100, opacity: 0 });
-      gsap.set(staggerEls || [], { y: direction === 1 ? 50 : -50, opacity: 0 });
-
-      const tl = gsap.timeline({
-        onComplete: () => {
-          currentIndex.current = index;
-          isAnimating.current = false;
-        }
-      });
-
-      tl.to(targetPath, {
-        attr: { d: paths.mid },
-        duration: 0.7,
-        ease: "sine.in",
-      })
-        .to(targetPath, {
-          attr: { d: paths.end },
-          duration: 0.7,
-          ease: "sine.out",
-        })
-      if (chars) {
-        tl.to(chars, {
-          y: 0,
-          opacity: 1,
-          stagger: 0.02,
-          duration: 0.8,
-          ease: "expo.out",
-        }, "-=0.4");
+    // Pin the master container. As the user scrolls, execute transitions sequentially.
+    const tlMaster = gsap.timeline({
+      scrollTrigger: {
+        trigger: "#liquid-transition-container",
+        start: "top top",
+        end: "+=300%", // 3 viewport heights for two full transitions
+        scrub: true,
+        pin: true,
+        anticipatePin: 1
       }
-      
-      if (staggerEls) {
-        tl.to(staggerEls, {
-          y: 0,
-          opacity: 1,
-          stagger: 0.1,
-          duration: 0.8,
-          ease: "power3.out",
-        }, "-=0.6");
-      }
-    };
-
-    const observer = Observer.create({
-      target: window,
-      type: "wheel,touch,pointer",
-      wheelSpeed: 1,
-      onDown: () => !isAnimating.current && gotoSection(currentIndex.current + 1, 1),
-      onUp: () => !isAnimating.current && gotoSection(currentIndex.current - 1, -1),
-      tolerance: 20,
-      preventDefault: true,
     });
+
+    // 1. Liquid Scroll: Hero -> IndependentSocial
+    tlMaster.to(pathRef.current, {
+      attr: { d: PATHS.down.mid },
+      ease: "power2.in",
+      duration: 1
+    }).to(pathRef.current, {
+      attr: { d: PATHS.down.end },
+      ease: "power2.out",
+      duration: 1
+    });
+
+    // 2. Before/After Slider: IndependentSocial -> SocialDataSection
+    tlMaster.fromTo(".after-slider-container",
+      { xPercent: 100, x: 0 },
+      { xPercent: 0, duration: 2, ease: "none" },
+      "+=0.5" // Pause slightly before starting the next transition
+    ).fromTo(".after-slider-content",
+      { xPercent: -100, x: 0 },
+      { xPercent: 0, duration: 2, ease: "none" },
+      "<" // Start synchronously
+    );
 
     return () => {
-      observer.kill();
+      smoother.kill();
     };
   }, { scope: containerRef });
 
-  const splitText = (text: string) => {
-    return text.split('').map((char, i) => (
-      <span
-        key={i}
-        className="split-char inline-block will-change-transform"
-        style={{ whiteSpace: char === ' ' ? 'pre' : 'normal' }}
-      >
-        {char}
-      </span>
-    ));
-  };
-
   return (
-    <div ref={containerRef} className="fixed inset-0 w-full h-full bg-[#050505] overflow-hidden select-none text-white">
+    <div ref={containerRef} className="bg-[#050505] text-white selection:bg-[#0000FF]/30">
 
-      {/* Global Noise Overlay for Editorial Film Aesthetic */}
+      {/* Global Elements (Fixed to viewport, outside of the scroll transform) */}
       <div
         className="fixed inset-0 pointer-events-none z-[9999] mix-blend-overlay opacity-30"
         style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}
       />
 
-      {/* Dynamic SVG ClipPath Definitions */}
-      <svg width="0" height="0" className="absolute pointer-events-none">
+      <svg width="0" height="0" className="fixed pointer-events-none">
         <defs>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <clipPath key={i} id={`liquid-clip-${i}`} clipPathUnits="objectBoundingBox">
-              <path ref={(el) => { pathRefs.current[i] = el; }} d={PATHS.down.start} />
-            </clipPath>
-          ))}
+          <clipPath id="liquid-clip-1" clipPathUnits="objectBoundingBox">
+            <path ref={pathRef} d={PATHS.down.start} />
+          </clipPath>
         </defs>
       </svg>
 
-      {/* ============================== */}
-      {/* SLIDE 1: THE HERO              */}
-      {/* ============================== */}
-      <section
-        ref={(el) => { sectionsRef.current[0] = el; }}
-        className="absolute inset-0 w-full h-full will-change-[clip-path,transform]"
-      >
-        <HeroSection isLoaded={isLoaded} splinePhase="ready" />
-      </section>
+      {/* Smooth Scroll Wrapper */}
+      <div id="smooth-wrapper">
+        <div id="smooth-content">
 
-      {/* ============================== */}
-      {/* SLIDE 2: INDEPENDENT SOCIAL    */}
-      {/* ============================== */}
-      <section
-        ref={(el) => { sectionsRef.current[1] = el; }}
-        className="absolute inset-0 w-full h-full will-change-[clip-path,transform] overflow-hidden bg-white"
-      >
-        <IndependentSocial />
-      </section>
+          {/* ============================== */}
+          {/* 1. LIQUID TRANSITION BLOCK     */}
+          {/* ============================== */}
+          <div id="liquid-transition-container" className="relative w-full h-screen overflow-hidden">
+            {/* SLIDE 1: THE HERO */}
+            <section className="absolute inset-0 w-full h-full z-10">
+              <HeroSection isLoaded={isLoaded} splinePhase="ready" />
+            </section>
 
-      {/* ============================== */}
-      {/* SLIDE 3: SOCIAL DATA SECTION   */}
-      {/* ============================== */}
-      <section
-        ref={(el) => { sectionsRef.current[2] = el; }}
-        className="absolute inset-0 w-full h-full will-change-[clip-path,transform] overflow-hidden"
-      >
-        <SocialDataSection />
-      </section>
+            {/* SLIDE 2: INDEPENDENT SOCIAL (Reveals over Hero via Clip Path) */}
+            <section
+              className="absolute inset-0 w-full h-full z-20 bg-white"
+              style={{ clipPath: 'url(#liquid-clip-1)' }}
+            >
+              <IndependentSocial />
+            </section>
+            {/* SLIDE 3: SOCIAL DATA SECTION (Reveals over Slide 2 via Slider) */}
+            <section
+              className="after-slider-container absolute inset-0 w-full h-full z-30 overflow-hidden pointer-events-none"
+              style={{ transform: 'translateX(100%)' }}
+            >
+              <LaserTransition />
+              {/* The content counter-translates to stay visually static during the slide */}
+              <div className="after-slider-content absolute inset-0 w-full h-full pointer-events-auto" style={{ transform: 'translateX(-100%)' }}>
+                <SocialDataSection />
+              </div>
+            </section>
+          </div>
 
-      {/* ============================== */}
-      {/* SLIDE 4: VELOCITY MARQUEE      */}
-      {/* ============================== */}
-      <section
-        ref={(el) => { sectionsRef.current[3] = el; }}
-        className="absolute inset-0 w-full h-full will-change-[clip-path,transform] overflow-hidden"
-      >
-        <VelocityMarquee />
-      </section>
+          {/* ============================== */}
+          {/* 2. NORMAL SCROLL FLOW SECTIONS */}
+          {/* ============================== */}
 
-      {/* ============================== */}
-      {/* SLIDE 5: CTA & FOOTER          */}
-      {/* ============================== */}
-      <section
-        ref={(el) => { sectionsRef.current[4] = el; }}
-        className="absolute inset-0 w-full h-full will-change-[clip-path,transform] overflow-y-auto bg-[#0a0a0c]"
-      >
-        <div className="min-h-full flex flex-col">
-          <CtaSection />
-          <SiteFooter />
+          <section className="relative w-full overflow-hidden">
+            <VelocityMarquee />
+          </section>
+
+          <section className="relative w-full overflow-hidden bg-[#0a0a0c]">
+            <div className="min-h-full flex flex-col">
+              <CtaSection />
+              <EpicFooter />
+            </div>
+          </section>
+
         </div>
-      </section>
-
+      </div>
     </div>
   );
 }
