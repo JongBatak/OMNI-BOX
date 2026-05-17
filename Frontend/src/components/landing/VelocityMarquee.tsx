@@ -275,7 +275,7 @@ export default function TextMaskTransition() {
             <mask id="omniFormatMask">
               <rect width="100%" height="100%" fill="white" />
               {/* OMNIBOX TEXT MASK */}
-              <text x="50%" y="180" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '50px', letterSpacing: '0.25em' }}>OMNIBOX</text>
+              <text x="50%" y="180" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '50px', letterSpacing: '0.25em' }}>YOUR OMNI-FORMAT</text>
               {/* LOGO MASK */}
               <g stroke="black" strokeWidth="14" strokeLinejoin="round" strokeLinecap="round" fill="none">
                 {/* Outer Hexagon / Isometrik Kotak Frame */}
@@ -293,7 +293,7 @@ export default function TextMaskTransition() {
               </g>
               <circle cx="500" cy="400" r="25" fill="black" />
               {/* FORMATS TEXT MASK */}
-              <text x="50%" y="620" textAnchor="middle" fill="black" style={{ fontFamily: "'PP Editorial New', serif", fontSize: '110px', letterSpacing: '-0.02em' }}>FORMATS</text>
+              <text x="50%" y="620" textAnchor="middle" fill="black" style={{ fontFamily: "'PP Editorial New', serif", fontSize: '110px', letterSpacing: '-0.02em' }}>GALLERY</text>
             </mask>
           </defs>
           <rect width="100%" height="100%" fill="#FFFFFF" mask="url(#omniFormatMask)" />
