@@ -1,12 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface GlossyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode;
-  className?: string;
+// Menggunakan HTMLMotionProps agar tipe data HTML dan Framer Motion sinkron total
+interface GlossyButtonProps extends HTMLMotionProps<"button"> {
   glowColor?: "cyan" | "blue" | "white";
+  children?: React.ReactNode;
 }
 
 export function GlossyButton({
