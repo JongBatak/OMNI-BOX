@@ -32,7 +32,7 @@ interface AuthContextType extends AuthState {
 
 // ── Constants ────────────────────────────────────────────────────────────────────
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = "/api/v1";
 const TOKEN_KEY = "omnibox_token";
 
 // ── Context ──────────────────────────────────────────────────────────────────────
