@@ -1,20 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactStrictMode: false,
   reactCompiler: true,
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
+        protocol: 'https',
+        hostname: 'zwingli.imaginepresma.com',
         pathname: '/storage/**',
       },
       {
         protocol: 'http',
-        hostname: '127.0.0.1',
+        hostname: 'localhost',
         port: '8000',
         pathname: '/storage/**',
       },
@@ -23,8 +21,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/:path*',
+        destination: 'http://omnibox-backend:80/api/:path*',
+      },
+      {
         source: '/storage/:path*',
-        destination: 'http://localhost:8000/storage/:path*',
+        destination: 'http://omnibox-backend:80/storage/:path*',
       },
     ];
   },
