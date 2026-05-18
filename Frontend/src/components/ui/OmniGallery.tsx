@@ -35,11 +35,14 @@ export function OmniGallery() {
       setIsLoading(true);
       setError('');
       try {
-        const token = localStorage.getItem('token');
+        // FIX: Samakan key token dengan AuthContext.tsx yaitu 'omnibox_token'
+        const token = localStorage.getItem('omnibox_token');
         if (!token) throw new Error('No authentication token found.');
 
         const endpoint = tab === 'personal' ? '/api/gallery/personal' : '/api/gallery/community';
-        const response = await fetch(`http://localhost:8000${endpoint}`, {
+        
+        // FIX: Ubah ke relative path agar melewati jembatan proxy next.config.ts
+        const response = await fetch(`${endpoint}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -74,7 +77,6 @@ export function OmniGallery() {
   };
 
   const handleFileClick = (file: ApiFile) => {
-    // Map ApiFile to WorkspaceFile
     setActiveWorkspaceFile({
       id: file.id.toString(),
       name: file.name,
@@ -138,7 +140,6 @@ export function OmniGallery() {
                 onClick={() => handleFileClick(file)}
                 className="group cursor-pointer aspect-square rounded-2xl glass-panel bg-white/5 border border-white/10 flex flex-col items-center justify-center p-4 relative overflow-hidden backdrop-blur-md hover:bg-white/10 transition-colors hover:shadow-[0_0_30px_rgba(255,255,255,0.05)]"
               >
-                {/* Bg glow based on type */}
                 <div className={cn(
                   "absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-2xl",
                   file.type === '3d' ? "bg-omni-cyan" : file.type === 'code' ? "bg-purple-500" : "bg-blue-500"

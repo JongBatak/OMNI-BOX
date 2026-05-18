@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Maximize2, Minimize2, Download, Play, Terminal, 
-  Code2, ZoomIn, Box, FileText, Image as ImageIcon,
-  FileVideo, Music, FileArchive, Loader2, ChevronRight
+  Box, FileText, Image as ImageIcon, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -47,30 +46,34 @@ export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file
   const [isExecuting, setIsExecuting] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true);
+    const timer = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (!file) return;
-    
-    // Strip localhost:8000 or 127.0.0.1:8000 from url to use Next.js rewrites and avoid CORS
-    const proxiedUrl = file.url.replace(/^http:\/\/(localhost|127\.0\.0\.1):8000/, '');
+  // SAFE PROXY URL: Diproses di top-level komponen agar bisa dipakai di useEffect dan renderContent
+  const proxiedUrl = file ? file.url.replace(/^https?:\/\/[^\/]+/, '') : '';
 
+  useEffect(() => {
+    if (!file || !proxiedUrl) return;
+    
     const type = getFileMetadata(file.name);
     if (type === 'code' || type === 'html' || file.name.endsWith('.txt')) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsFetching(true);
-      fetch(proxiedUrl)
-        .then(res => {
-           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-           return res.text();
-        })
-        .then(text => setFileContent(text))
-        .catch(err => setFileContent('Error loading file content: ' + err))
-        .finally(() => setIsFetching(false));
+      const loadContent = async () => {
+        setIsFetching(true);
+        try {
+          const res = await fetch(proxiedUrl);
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          const text = await res.text();
+          setFileContent(text);
+        } catch (err) {
+          setFileContent('Error loading file content: ' + err);
+        } finally {
+          setIsFetching(false);
+        }
+      };
+      loadContent();
     }
-  }, [file]);
+  }, [file, proxiedUrl]);
 
   if (!isMounted) return null;
 
@@ -79,13 +82,11 @@ export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file
     setIsExecuting(true);
     setTerminalOutput([`[SYS] Compiling ${file.name}...`]);
     
-    // Simulate compilation time
     setTimeout(() => {
       const ext = file.name.split('.').pop()?.toLowerCase() || '';
       const outputs: string[] = [];
       const lines = fileContent.split('\n');
       
-      // Simple mock parser to find printed strings
       lines.forEach(line => {
         const trimmed = line.trim();
         if (trimmed.startsWith('//') || trimmed.startsWith('#')) return;
@@ -112,7 +113,6 @@ export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file
           const matches = [...line.matchAll(/echo\s+['"](.*?)['"]/g)];
           matches.forEach(m => outputs.push(`> ${m[1]}`));
         } else {
-          // Generic fallback
           const m = line.match(/(?:print|echo|console\.log|printf|cout).*?['"](.*?)['"]/);
           if (m && m[1]) outputs.push(`> ${m[1].replace(/\\n/g, '')}`);
         }
@@ -166,25 +166,23 @@ export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file
     }
 
     if (type === 'image') {
-      return <div className="relative w-full h-full flex items-center justify-center bg-black/20"><Image src={file.url} alt={file.name} fill className="object-contain" /></div>;
+      return <div className="relative w-full h-full flex items-center justify-center bg-black/20"><Image src={proxiedUrl} alt={file.name} fill className="object-contain" /></div>;
     }
 
     if (type === 'video') {
-      return <video src={file.url} controls className="w-full h-full object-contain bg-black/20" />;
+      return <video src={proxiedUrl} controls className="w-full h-full object-contain bg-black/20" />;
     }
 
     if (type === 'document' || type === 'unknown') {
-      return <iframe src={file.url} className="w-full h-full bg-white" title={file.name} />;
+      return <iframe src={proxiedUrl} className="w-full h-full bg-white" title={file.name} />;
     }
     
-    const proxiedUrl = file.url.replace(/^http:\/\/(localhost|127\.0\.0\.1):8000/, '');
-
     if (type === '3d') {
       const ext = file.name.split('.').pop() || '';
       return (
         <div className="w-full h-full flex flex-col relative bg-black/90 text-white/50">
           <ThreeDViewer url={proxiedUrl} extension={ext} />
-          <a href={file.url} download className="absolute bottom-4 right-4 z-10 px-6 py-2 bg-omni-cyan/20 text-omni-cyan rounded-full flex items-center gap-2 hover:bg-omni-cyan/30">
+          <a href={proxiedUrl} download className="absolute bottom-4 right-4 z-10 px-6 py-2 bg-omni-cyan/20 text-omni-cyan rounded-full flex items-center gap-2 hover:bg-omni-cyan/30">
             <Download className="w-4 h-4" /> Download Asset
           </a>
         </div>
