@@ -87,12 +87,6 @@ function Navbar() {
           OMNI<span className="text-white/40 font-light mx-1">|</span>BOX
         </span>
       </div>
-      <div className="pointer-events-auto hidden md:flex items-center gap-8 text-[11px] font-bold tracking-widest uppercase var(--font-inter)">
-        <button className="hover:opacity-70 transition-opacity cursor-pointer">Manifesto</button>
-        <button className="hover:opacity-70 transition-opacity cursor-pointer">Formats</button>
-        <button className="hover:opacity-70 transition-opacity cursor-pointer">Security</button>
-        <button className="px-4 py-2 bg-white text-black rounded-sm hover:bg-white/80 transition-colors">Enter Workspace</button>
-      </div>
     </nav>
   );
 }
@@ -107,6 +101,7 @@ export default function FloemaStylePage() {
   const bgRefs = useRef<(HTMLDivElement | null)[]>([]);
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressLineRef = useRef<HTMLDivElement>(null);
+
   const maskLayerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
@@ -123,21 +118,25 @@ export default function FloemaStylePage() {
         trigger: containerEl,
         start: 'top top',
         end: () => `+=${(ribbonEl.scrollHeight - window.innerHeight) * 3.5}px`, // Increased multipliers to account for the beginning zoom duration
-        scrub: 0.1, 
+        scrub: 0.1,
         pin: true,
         invalidateOnRefresh: true,
       },
     });
 
+
+
     if (maskLayerRef.current) {
       master.to(maskLayerRef.current, {
-        scale: 180, 
-        autoAlpha: 0, 
-        transformOrigin: "50% 50%", 
+        scale: 180,
+        autoAlpha: 0,
+        transformOrigin: "50% 50%",
         ease: 'power3.inOut',
         duration: 1.0
       }, 0);
     }
+
+
 
     master.to(ribbonEl, {
       y: () => -(ribbonEl.scrollHeight - window.innerHeight),
@@ -145,8 +144,8 @@ export default function FloemaStylePage() {
       duration: 2.5,
     }, 1.0);
 
-    const p = 0.15; 
-    
+    const p = 0.15;
+
     bgEls.forEach((bgEl, i) => {
       const panelEl = panelEls[i];
       if (!panelEl) return;
@@ -167,6 +166,7 @@ export default function FloemaStylePage() {
       }, 1.0);
     });
 
+    // Hide content text for sections 1+ initially; section 0 is visible from the start
     contentEls.forEach((contentEl, idx) => {
       if (idx > 0 && contentEl) {
         gsap.set(contentEl.children, {
@@ -177,6 +177,7 @@ export default function FloemaStylePage() {
       }
     });
 
+    // Section 0: visible initially, fade out as we scroll into section 1
     if (contentEls[0]) {
       master.to(contentEls[0].children, {
         opacity: 0,
@@ -184,10 +185,11 @@ export default function FloemaStylePage() {
         filter: 'blur(12px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.75,
-      }, 1.0);
+        duration: 0.40,
+      }, 1.2);
     }
 
+    // Section 1: fade in once its image is centered, fade out before section 2
     if (contentEls[1]) {
       master.to(contentEls[1].children, {
         opacity: 1,
@@ -195,18 +197,19 @@ export default function FloemaStylePage() {
         filter: 'blur(0px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.75,
-      }, 1.0);
+        duration: 0.35,
+      }, 1.55);
       master.to(contentEls[1].children, {
         opacity: 0,
         y: -60,
         filter: 'blur(12px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.50,
-      }, 1.75);
+        duration: 0.35,
+      }, 1.90);
     }
 
+    // Section 2
     if (contentEls[2]) {
       master.to(contentEls[2].children, {
         opacity: 1,
@@ -214,18 +217,19 @@ export default function FloemaStylePage() {
         filter: 'blur(0px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.50,
-      }, 1.75);
+        duration: 0.35,
+      }, 2.10);
       master.to(contentEls[2].children, {
         opacity: 0,
         y: -60,
         filter: 'blur(12px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.50,
-      }, 2.25);
+        duration: 0.35,
+      }, 2.45);
     }
 
+    // Section 3
     if (contentEls[3]) {
       master.to(contentEls[3].children, {
         opacity: 1,
@@ -233,18 +237,19 @@ export default function FloemaStylePage() {
         filter: 'blur(0px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.50,
-      }, 2.25);
+        duration: 0.35,
+      }, 2.65);
       master.to(contentEls[3].children, {
         opacity: 0,
         y: -60,
         filter: 'blur(12px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.75,
-      }, 2.75);
+        duration: 0.35,
+      }, 3.00);
     }
 
+    // Section 4 (finale): fade in and stay
     if (contentEls[4]) {
       master.to(contentEls[4].children, {
         opacity: 1,
@@ -252,8 +257,8 @@ export default function FloemaStylePage() {
         filter: 'blur(0px)',
         stagger: 0.05,
         ease: 'power1.inOut',
-        duration: 0.75,
-      }, 2.75);
+        duration: 0.40,
+      }, 3.20);
     }
 
     if (progressLineRef.current) {
@@ -269,10 +274,10 @@ export default function FloemaStylePage() {
     <>
       <Navbar />
 
-      <div ref={containerRef} className="relative h-screen w-full bg-[#0a0a0c] overflow-hidden">
-        
+      <div ref={containerRef} className="relative h-screen w-full bg-white overflow-hidden">
+
         <div ref={ribbonRef} className="absolute top-0 left-0 w-full flex flex-col will-change-transform">
-          
+
           {SECTIONS.map((section, index) => {
             const isEdge = index === 0 || index === SECTIONS.length - 1;
             const panelHeightClass = isEdge ? 'h-screen' : 'h-[80vh]';
@@ -304,7 +309,7 @@ export default function FloemaStylePage() {
         {/* OVERLAY TEXT (Fixed to Viewport, animated by GSAP) */}
         <div className="absolute inset-0 pointer-events-none z-[10]">
           {SECTIONS.map((section, index) => (
-            <div 
+            <div
               key={`content-${section.number}`}
               ref={(el) => { contentRefs.current[index] = el; }}
               className="absolute inset-0 flex flex-col items-center justify-center px-6"
@@ -330,7 +335,7 @@ export default function FloemaStylePage() {
               </div>
 
               {/* The God-Tier Dynamic Headline */}
-              <h2 
+              <h2
                 className={`text-white text-center max-w-5xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] will-change-[transform,opacity,filter] ${section.fontClass} ${section.textClass}`}
                 style={{
                   fontSize: 'clamp(2.5rem, 5vw, 5rem)',
@@ -345,7 +350,7 @@ export default function FloemaStylePage() {
 
         {/* Center Progress Line */}
         <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[2px] bg-white/10 z-100 mix-blend-difference pointer-events-none px-4 md:px-0">
-          <div 
+          <div
             ref={progressLineRef}
             className="h-full bg-white will-change-[width] shadow-[0_0_10px_rgba(255,255,255,0.5)]"
             style={{ width: '0%' }}
@@ -358,7 +363,7 @@ export default function FloemaStylePage() {
             <defs>
               <mask id="omniFormatMask">
                 <rect width="100%" height="100%" fill="white" />
-                <text x="50%" y="180" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '38px', letterSpacing: '0.25em' }}>YOUR OMNI-FORMAT</text>
+                <text x="50%" y="220" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '38px', letterSpacing: '0.25em' }}>YOUR OMNI-FORMAT</text>
                 <g stroke="black" strokeWidth="14" strokeLinejoin="round" strokeLinecap="round" fill="none">
                   <polygon points="500,260 620,330 620,470 500,540 380,470 380,330" />
                   <line x1="500" y1="260" x2="500" y2="400" />
@@ -369,10 +374,10 @@ export default function FloemaStylePage() {
                   <line x1="500" y1="540" x2="500" y2="400" />
                 </g>
                 <circle cx="500" cy="400" r="25" fill="black" />
-                <text x="50%" y="620" textAnchor="middle" fill="black" style={{ fontFamily: "'PP Editorial New', serif", fontSize: '110px', letterSpacing: '-0.02em' }}>GALLERY</text>
+                <text x="50%" y="640" textAnchor="middle" fill="black" style={{ fontFamily: "'PP Editorial New', serif", fontSize: '90px', letterSpacing: '-0.02em' }}>GALLERY</text>
               </mask>
             </defs>
-            <rect width="100%" height="100%" fill="#0a0a0c" mask="url(#omniFormatMask)" />
+            <rect width="100%" height="100%" fill="white" mask="url(#omniFormatMask)" />
           </svg>
         </div>
       </div>
