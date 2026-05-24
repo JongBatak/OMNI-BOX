@@ -35,8 +35,9 @@ export default function LiquidScrollEngine({ isLoaded = true }: { isLoaded?: boo
     let smoother = ScrollSmoother.create({
       wrapper: "#smooth-wrapper",
       content: "#smooth-content",
-      smooth: 1.5,
+      smooth: 1.0,
       effects: true,
+      normalizeScroll: true,
     });
 
     // Pin the master container. As the user scrolls, execute transitions sequentially.
@@ -47,7 +48,8 @@ export default function LiquidScrollEngine({ isLoaded = true }: { isLoaded?: boo
         end: "+=300%", // 3 viewport heights for two full transitions
         scrub: true,
         pin: true,
-        anticipatePin: 1
+        anticipatePin: 1,
+        fastScrollEnd: true,
       }
     });
 
@@ -73,7 +75,20 @@ export default function LiquidScrollEngine({ isLoaded = true }: { isLoaded?: boo
       "<" // Start synchronously
     );
 
+    // Add resize resilience
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        ScrollTrigger.refresh(true);
+      }, 250);
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+      tlMaster.kill();
       smoother.kill();
     };
   }, { scope: containerRef });

@@ -63,6 +63,51 @@ body {
   overflow-x: clip;
 }
 
+/* ─────────────────────────────────────────────
+   GPU Compositor Hints & Optimizations
+───────────────────────────────────────────── */
+
+/* Force GPU layer for elements that will be animated by GSAP */
+.will-change-transform {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Hint for pinned sections to avoid layout thrashing */
+.pin-section,
+[data-scroll-section] {
+  contain: layout style;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Reduce paint area for fixed overlays */
+.noise-overlay {
+  contain: strict;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pin-section {
+    contain: none;
+  }
+}
+
+
 /* Glassmorphism utility classes */
 .glass-panel {
   background: rgba(19, 20, 26, 0.6);

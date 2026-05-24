@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import Image from 'next/image';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -29,7 +30,7 @@ const SECTIONS: SectionData[] = [
     label: 'Intro',
     tagline: 'Your Storage',
     headline: 'Save your priceless memories in any format',
-    bgImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop',
+    bgImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=75&w=1200&auto=format&fit=crop',
     labelColor: '#FFFFFF',
     fontClass: 'var(--font-inter)',
     textClass: 'uppercase font-black tracking-tight',
@@ -39,7 +40,7 @@ const SECTIONS: SectionData[] = [
     label: 'Loving Memories',
     tagline: 'Nostalgia',
     headline: 'Share your loving memories',
-    bgImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800&auto=format&fit=crop',
+    bgImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=75&w=1200&auto=format&fit=crop',
     labelColor: '#E25822',
     fontClass: 'var(--font-playfair)',
     textClass: 'italic font-bold tracking-wide drop-shadow-[0_4px_12px_rgba(226,88,34,0.3)]',
@@ -49,7 +50,7 @@ const SECTIONS: SectionData[] = [
     label: 'Sharing Love',
     tagline: 'Connection',
     headline: 'Capture the subtle moments',
-    bgImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop',
+    bgImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=75&w=1200&auto=format&fit=crop',
     labelColor: '#0047AB',
     fontClass: 'var(--font-syne)',
     textClass: 'uppercase font-extrabold tracking-tight',
@@ -59,7 +60,7 @@ const SECTIONS: SectionData[] = [
     label: 'Teamwork',
     tagline: 'Collaboration',
     headline: 'Show your teamwork and love',
-    bgImage: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
+    bgImage: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=75&w=1200&auto=format&fit=crop',
     labelColor: '#006400',
     fontClass: 'var(--font-inter)',
     textClass: 'font-semibold tracking-wide',
@@ -69,7 +70,7 @@ const SECTIONS: SectionData[] = [
     label: 'OmniBox',
     tagline: 'The Core',
     headline: 'THAT\'S WHY WE BUILT—',
-    bgImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop',
+    bgImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=75&w=1200&auto=format&fit=crop',
     labelColor: '#0000FF',
     fontClass: 'var(--font-bebas)',
     textClass: 'uppercase tracking-[0.2em] font-normal',
@@ -124,9 +125,10 @@ export default function FloemaStylePage() {
         trigger: containerEl,
         start: 'top top',
         end: () => `+=${(ribbonEl.scrollHeight - window.innerHeight) * 3.5}px`,
-        scrub: 0.1,
+        scrub: 0.8,
         pin: true,
         invalidateOnRefresh: true,
+        fastScrollEnd: true,
       },
     });
 
@@ -277,7 +279,16 @@ export default function FloemaStylePage() {
             return (
               <div key={section.number} ref={(el) => { panelRefs.current[index] = el; }} className={`relative w-full ${panelHeightClass} overflow-hidden select-none`}>
                 <div ref={(el) => { bgRefs.current[index] = el; }} className={`absolute w-full left-0 will-change-transform overflow-hidden ${bgHeightClass}`}>
-                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${section.bgImage}")` }} />
+                  <Image
+                    src={section.bgImage}
+                    alt={section.headline}
+                    fill
+                    sizes="100vw"
+                    priority={index === 0}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    quality={75}
+                    className="object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/60 z-[1]" />
                 </div>
               </div>

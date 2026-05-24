@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useEffect, useState, useRef } from 'react';
+import { WebGLErrorBoundary } from '../WebGLErrorBoundary';
 
 type SplineSceneProps = {
   className?: string;
@@ -15,11 +17,39 @@ const Spline = dynamic(() => import('@splinetool/react-spline'), {
 });
 
 export default function SplineScene2({ className = 'h-full w-full' }: SplineSceneProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 1024);
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <div className={className}>
+    <div ref={containerRef} className={className}>
       <div className="relative h-full w-full">
-        {SCENE_URL ? (
-          <Spline scene={SCENE_URL} className="h-full w-full" />
+        {!isMobile && isVisible && SCENE_URL ? (
+          <WebGLErrorBoundary>
+            <Spline scene={SCENE_URL} className="h-full w-full" />
+          </WebGLErrorBoundary>
         ) : (
           <div className="flex h-full w-full items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-4 text-center text-xs font-medium tracking-[0.12em] text-white/85">
             SPLINE SCENE 2 PLACEHOLDER

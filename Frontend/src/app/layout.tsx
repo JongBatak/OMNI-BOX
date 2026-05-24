@@ -42,6 +42,9 @@ export default function RootLayout({
       // h-full antialiased dibiarkan karena aman
       className={`${inter.variable} ${syne.variable} ${bebasNeue.variable} ${playfair.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preload" href="https://grainy-gradients.vercel.app/noise.svg" as="image" />
+      </head>
       {/* FIX PENTING: overflow-x-hidden DIHAPUS dari <body>.
         Ini yang bikin GSAP Pinning lu jebol/mati dari tadi!
       */}

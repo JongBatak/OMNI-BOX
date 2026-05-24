@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -110,9 +110,10 @@ function CustomCursor({
 /* ─────────────────────────────────────────────
    NOISE OVERLAY
 ───────────────────────────────────────────── */
-function NoiseOverlay() {
+const NoiseOverlay = React.memo(function NoiseOverlay() {
   return (
     <div
+      aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-[9990]"
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
@@ -121,12 +122,12 @@ function NoiseOverlay() {
       }}
     />
   );
-}
+});
 
 /* ─────────────────────────────────────────────
    SCENE 1 — THE MANIFESTO DROP
 ───────────────────────────────────────────── */
-function Scene1() {
+const Scene1 = React.memo(function Scene1() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLDivElement>(null);
   const manifestoRef = useRef<HTMLDivElement>(null);
@@ -136,7 +137,7 @@ function Scene1() {
     () => {
       if (!sectionRef.current || !nameRef.current || !manifestoRef.current || !wrapRef.current) return;
 
-      gsap.set(wrapRef.current, { scale: 2, filter: "blur(20px)" });
+      gsap.set(wrapRef.current, { scale: 1.2, autoAlpha: 0 });
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -148,10 +149,10 @@ function Scene1() {
         },
       });
 
-      // Phase 1: scale & unblur
+      // Phase 1: scale & reveal
       tl.to(wrapRef.current, {
         scale: 1,
-        filter: "blur(0px)",
+        autoAlpha: 1,
         duration: 1,
         ease: "power2.out",
       });
@@ -237,12 +238,12 @@ function Scene1() {
       </span>
     </section>
   );
-}
+});
 
 /* ─────────────────────────────────────────────
    SCENE 2 — 3D ETYMOLOGY ILLUSION
 ───────────────────────────────────────────── */
-function Scene2() {
+const Scene2 = React.memo(function Scene2() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const omniboxRef = useRef<HTMLDivElement>(null);
   const topHalfRef = useRef<HTMLDivElement>(null);
@@ -547,12 +548,12 @@ function Scene2() {
       </span>
     </section>
   );
-}
+});
 
 /* ─────────────────────────────────────────────
    SCENE 3 — WIREFRAME PARALLAX (unpinned)
 ───────────────────────────────────────────── */
-function Scene3() {
+const Scene3 = React.memo(function Scene3() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const cubeRef = useRef<SVGSVGElement>(null);
@@ -716,7 +717,7 @@ function Scene3() {
       </span>
     </section>
   );
-}
+});
 
 /* ─────────────────────────────────────────────
    ROOT MANIFESTO COMPONENT
@@ -726,11 +727,19 @@ export default function Manifesto() {
     expand: () => { },
     collapse: () => { },
   });
+  
+  const [supportsHover, setSupportsHover] = useState(false);
+
+  useEffect(() => {
+    setSupportsHover(window.matchMedia('(hover: hover)').matches);
+  }, []);
 
   return (
     <>
       <style>{`
-        * { cursor: none !important; }
+        @media (hover: hover) {
+          * { cursor: none !important; }
+        }
         html { scroll-behavior: auto; }
         body { background: #050505; overflow-x: hidden; }
 
@@ -741,7 +750,7 @@ export default function Manifesto() {
       `}</style>
 
       <NoiseOverlay />
-      <CustomCursor cursorAPI={cursorAPI} />
+      {supportsHover && <CustomCursor cursorAPI={cursorAPI} />}
 
       <main>
         <Scene1 />

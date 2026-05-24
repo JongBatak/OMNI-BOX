@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import dynamic from 'next/dynamic';
+import { WebGLErrorBoundary } from '../WebGLErrorBoundary';
 
 const Spline = dynamic(() => import('@splinetool/react-spline'), {
   ssr: false,
@@ -21,6 +22,31 @@ if (typeof window !== 'undefined') {
 
 export default function IndependentSocial() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isSplineVisible, setIsSplineVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 1024);
+    
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSplineVisible(entry.isIntersecting);
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, []);
 
   useGSAP(() => {
     const q = gsap.utils.selector(containerRef);
@@ -123,10 +149,19 @@ export default function IndependentSocial() {
           <div className="relative w-full flex-grow overflow-hidden rounded-3xl z-20">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] bg-[#0000FF] rounded-full blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none" />
             <div className="absolute -top-[80px] -bottom-[80px] -left-[80px] -right-[80px] spline-watermark-hider cursor-grab active:cursor-grabbing">
-              <Spline
-                scene={FOLDER_SPLINE_URL}
-                style={{ width: '100%', height: '100%', outline: 'none', pointerEvents: 'auto' }}
-              />
+              {!isMobile && isSplineVisible ? (
+                <WebGLErrorBoundary>
+                  <Spline
+                    scene={FOLDER_SPLINE_URL}
+                    style={{ width: '100%', height: '100%', outline: 'none', pointerEvents: 'auto' }}
+                  />
+                </WebGLErrorBoundary>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 animate-pulse">
+                  <span className="text-xs font-bold tracking-[0.3em] text-black/40 mb-2">3D ASSET</span>
+                  <span className="text-[10px] tracking-[0.1em] text-black/30">Optimized for Desktop</span>
+                </div>
+              )}
             </div>
           </div>
 

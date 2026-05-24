@@ -115,6 +115,7 @@ export default function MagicRings({
   const hoverAmountRef = useRef(0);
   const isHoveredRef = useRef(false);
   const burstRef = useRef(0);
+  const isVisible = useRef(true);
 
   useEffect(() => {
     propsRef.current = {
@@ -180,13 +181,20 @@ export default function MagicRings({
     const resize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
-      const dpr = Math.min(window.devicePixelRatio, 2);
+      const isMobile = window.innerWidth < 768;
+      const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio, 1.5);
       renderer.setSize(w, h);
       renderer.setPixelRatio(dpr);
       uniforms.uResolution.value.set(w * dpr, h * dpr);
     };
     resize();
     window.addEventListener('resize', resize);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => { isVisible.current = entry.isIntersecting; },
+      { threshold: 0.1 }
+    );
+    observer.observe(mount);
 
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
@@ -212,6 +220,7 @@ export default function MagicRings({
     let frameId: number;
     const animate = (t: number) => {
       frameId = requestAnimationFrame(animate);
+      if (!isVisible.current) return;
       const p = propsRef.current!;
 
       smoothMouseRef.current[0] += (mouseRef.current[0] - smoothMouseRef.current[0]) * 0.08;
@@ -219,6 +228,9 @@ export default function MagicRings({
       hoverAmountRef.current += ((isHoveredRef.current ? 1 : 0) - hoverAmountRef.current) * 0.08;
       burstRef.current *= 0.95;
       if (burstRef.current < 0.001) burstRef.current = 0;
+
+      const isMobile = window.innerWidth < 768;
+      const actualRingCount = isMobile ? Math.min(4, p.ringCount) : p.ringCount;
 
       uniforms.uTime.value = t * 0.001 * p.speed;
       uniforms.uAttenuation.value = p.attenuation;
@@ -228,7 +240,7 @@ export default function MagicRings({
       uniforms.uBaseRadius.value = p.baseRadius;
       uniforms.uRadiusStep.value = p.radiusStep;
       uniforms.uScaleRate.value = p.scaleRate;
-      uniforms.uRingCount.value = p.ringCount;
+      uniforms.uRingCount.value = actualRingCount;
       uniforms.uOpacity.value = p.opacity;
       uniforms.uNoiseAmount.value = p.noiseAmount;
       uniforms.uRotation.value = (p.rotation * Math.PI) / 180;
@@ -249,6 +261,7 @@ export default function MagicRings({
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', resize);
+      observer.disconnect();
       ro.disconnect();
       mount.removeEventListener('mousemove', onMouseMove);
       mount.removeEventListener('mouseenter', onMouseEnter);
