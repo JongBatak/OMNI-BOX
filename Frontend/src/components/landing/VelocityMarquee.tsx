@@ -19,8 +19,8 @@ interface SectionData {
   headline: string;
   bgImage: string;
   labelColor: string;
-  fontClass: string; // Dynamic font injection
-  textClass: string; // Specific styling for the headline
+  fontClass: string;
+  textClass: string;
 }
 
 const SECTIONS: SectionData[] = [
@@ -29,50 +29,50 @@ const SECTIONS: SectionData[] = [
     label: 'Intro',
     tagline: 'Your Storage',
     headline: 'Save your priceless memories in any format',
-    bgImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop', // Gallery
-    labelColor: '#FFFFFF', // Clean White
-    fontClass: 'font-serif',
-    textClass: 'font-light tracking-wide',
+    bgImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop',
+    labelColor: '#FFFFFF',
+    fontClass: 'var(--font-inter)',
+    textClass: 'uppercase font-black tracking-tight',
   },
   {
     number: '02',
     label: 'Loving Memories',
     tagline: 'Nostalgia',
     headline: 'Share your loving memories',
-    bgImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800&auto=format&fit=crop', // Couple
-    labelColor: '#E25822', // Warm Orange
-    fontClass: 'font-serif',
-    textClass: 'font-light tracking-wide italic',
+    bgImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800&auto=format&fit=crop',
+    labelColor: '#E25822',
+    fontClass: 'var(--font-playfair)',
+    textClass: 'italic font-bold tracking-wide drop-shadow-[0_4px_12px_rgba(226,88,34,0.3)]',
   },
   {
     number: '03',
     label: 'Sharing Love',
     tagline: 'Connection',
     headline: 'Capture the subtle moments',
-    bgImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop', // Subtlety
-    labelColor: '#0047AB', // Cool Blue
-    fontClass: 'font-serif',
-    textClass: 'font-light tracking-wide',
+    bgImage: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop',
+    labelColor: '#0047AB',
+    fontClass: 'var(--font-syne)',
+    textClass: 'uppercase font-extrabold tracking-tight',
   },
   {
     number: '04',
     label: 'Teamwork',
     tagline: 'Collaboration',
     headline: 'Show your teamwork and love',
-    bgImage: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop', // Teamwork
-    labelColor: '#006400', // Deep Green
-    fontClass: 'font-serif',
-    textClass: 'font-light tracking-wide italic',
+    bgImage: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
+    labelColor: '#006400',
+    fontClass: 'var(--font-inter)',
+    textClass: 'font-semibold tracking-wide',
   },
   {
     number: '05',
     label: 'OmniBox',
     tagline: 'The Core',
     headline: 'THAT\'S WHY WE BUILT—',
-    bgImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop', // Deep space/engineering vibe for finale
-    labelColor: '#0000FF', // OmniBox Blue
-    fontClass: 'font-serif',
-    textClass: 'font-light tracking-[0.2em] uppercase',
+    bgImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop',
+    labelColor: '#0000FF',
+    fontClass: 'var(--font-bebas)',
+    textClass: 'uppercase tracking-[0.2em] font-normal',
   },
 ];
 
@@ -100,31 +100,35 @@ export default function FloemaStylePage() {
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const bgRefs = useRef<(HTMLDivElement | null)[]>([]);
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const badgeRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressLineRef = useRef<HTMLDivElement>(null);
 
   const maskLayerRef = useRef<HTMLDivElement>(null);
+
+  // Keep track of which section is currently active
+  const activeSectionIndex = useRef<number>(-1);
 
   useGSAP(() => {
     const bgEls = bgRefs.current.filter(Boolean) as HTMLDivElement[];
     const contentEls = contentRefs.current.filter(Boolean) as HTMLDivElement[];
     const panelEls = panelRefs.current.filter(Boolean) as HTMLDivElement[];
+    const badgeEls = badgeRefs.current.filter(Boolean) as HTMLDivElement[];
     const ribbonEl = ribbonRef.current;
     const containerEl = containerRef.current;
 
     if (!ribbonEl || !containerEl) return;
 
+    // 1. Setup the main scrubbed timeline for the scrolling ribbon and mask
     const master = gsap.timeline({
       scrollTrigger: {
         trigger: containerEl,
         start: 'top top',
-        end: () => `+=${(ribbonEl.scrollHeight - window.innerHeight) * 3.5}px`, // Increased multipliers to account for the beginning zoom duration
+        end: () => `+=${(ribbonEl.scrollHeight - window.innerHeight) * 3.5}px`,
         scrub: 0.1,
         pin: true,
         invalidateOnRefresh: true,
       },
     });
-
-
 
     if (maskLayerRef.current) {
       master.to(maskLayerRef.current, {
@@ -135,8 +139,6 @@ export default function FloemaStylePage() {
         duration: 1.0
       }, 0);
     }
-
-
 
     master.to(ribbonEl, {
       y: () => -(ribbonEl.scrollHeight - window.innerHeight),
@@ -166,101 +168,6 @@ export default function FloemaStylePage() {
       }, 1.0);
     });
 
-    // Hide content text for sections 1+ initially; section 0 is visible from the start
-    contentEls.forEach((contentEl, idx) => {
-      if (idx > 0 && contentEl) {
-        gsap.set(contentEl.children, {
-          opacity: 0,
-          y: 60,
-          filter: 'blur(12px)',
-        });
-      }
-    });
-
-    // Section 0: visible initially, fade out as we scroll into section 1
-    if (contentEls[0]) {
-      master.to(contentEls[0].children, {
-        opacity: 0,
-        y: -60,
-        filter: 'blur(12px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.40,
-      }, 1.2);
-    }
-
-    // Section 1: fade in once its image is centered, fade out before section 2
-    if (contentEls[1]) {
-      master.to(contentEls[1].children, {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.35,
-      }, 1.55);
-      master.to(contentEls[1].children, {
-        opacity: 0,
-        y: -60,
-        filter: 'blur(12px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.35,
-      }, 1.90);
-    }
-
-    // Section 2
-    if (contentEls[2]) {
-      master.to(contentEls[2].children, {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.35,
-      }, 2.10);
-      master.to(contentEls[2].children, {
-        opacity: 0,
-        y: -60,
-        filter: 'blur(12px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.35,
-      }, 2.45);
-    }
-
-    // Section 3
-    if (contentEls[3]) {
-      master.to(contentEls[3].children, {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.35,
-      }, 2.65);
-      master.to(contentEls[3].children, {
-        opacity: 0,
-        y: -60,
-        filter: 'blur(12px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.35,
-      }, 3.00);
-    }
-
-    // Section 4 (finale): fade in and stay
-    if (contentEls[4]) {
-      master.to(contentEls[4].children, {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        stagger: 0.05,
-        ease: 'power1.inOut',
-        duration: 0.40,
-      }, 3.20);
-    }
-
     if (progressLineRef.current) {
       master.to(progressLineRef.current, {
         width: '100%',
@@ -268,39 +175,111 @@ export default function FloemaStylePage() {
         duration: 2.5,
       }, 1.0);
     }
+
+    // 2. Setup independent text and badge animations
+
+    // Initial state
+    contentEls.forEach((el) => {
+      if (el) gsap.set(el.children, { opacity: 0, y: 40, filter: 'blur(8px)' });
+    });
+    badgeEls.forEach((el) => {
+      if (el) gsap.set(el, { opacity: 0, y: 20 });
+    });
+
+    // Function to handle switching texts independent of scrub
+    const showTextAndBadge = (index: number) => {
+      if (activeSectionIndex.current === index) return; // Already active
+
+      // Animate OUT current
+      if (activeSectionIndex.current !== -1) {
+        const oldIdx = activeSectionIndex.current;
+        const oldContent = contentEls[oldIdx];
+        const oldBadge = badgeEls[oldIdx];
+
+        if (oldContent && oldBadge) {
+          gsap.to(oldBadge, { opacity: 0, y: -20, ease: 'power2.in', duration: 0.3 });
+          gsap.to(oldContent.querySelectorAll('.animate-target'), {
+            opacity: 0, y: -40, filter: 'blur(8px)', ease: 'power2.in', duration: 0.3
+          });
+        }
+      }
+
+      // Animate IN new
+      if (index !== -1) {
+        const newContent = contentEls[index];
+        const newBadge = badgeEls[index];
+
+        if (newContent && newBadge) {
+          gsap.to(newBadge, { opacity: 1, y: 0, ease: 'power2.out', duration: 0.5, delay: 0.1 });
+          gsap.to(newContent.querySelectorAll('.animate-target'), {
+            opacity: 1, y: 0, filter: 'blur(0px)', ease: 'power2.out', duration: 0.5, delay: 0.1
+          });
+        }
+      }
+
+      activeSectionIndex.current = index;
+    };
+    // We use the master timeline's progress to determine which section should be active
+    // This allows the text to trigger as a specific point in the animation is reached, 
+    // but the text animation itself plays independently at normal speed.
+    ScrollTrigger.create({
+      trigger: containerEl,
+      start: 'top top',
+      end: () => `+=${(ribbonEl.scrollHeight - window.innerHeight) * 3.5}px`,
+      onUpdate: (self) => {
+        const progress = self.progress;
+
+        // Define thresholds based on the master timeline's duration (total 3.5s)
+        // Mask animation is 0 to 1.0. Ribbon scroll is 1.0 to 3.5.
+
+        if (progress <= 0.10) {
+          showTextAndBadge(-1);
+        } else if (progress > 0.10 && progress < 0.30) {
+          showTextAndBadge(0);
+        } else if (progress >= 0.30 && progress < 0.50) {
+          showTextAndBadge(1);
+        } else if (progress >= 0.50 && progress < 0.70) {
+          showTextAndBadge(2);
+        } else if (progress >= 0.70 && progress < 0.90) {
+          showTextAndBadge(3);
+        } else if (progress >= 0.90) {
+          showTextAndBadge(4);
+        }
+      }
+    });
+
   }, { scope: containerRef });
 
   return (
     <>
       <Navbar />
 
-      <div ref={containerRef} className="relative h-screen w-full bg-white overflow-hidden">
+      <div ref={containerRef} className="relative h-screen w-full bg-[#0a0a0c] overflow-hidden">
+
+        {/* Fixed Badge Container */}
+        <div className="absolute top-[42%] left-20 md:left-32 z-[150] pointer-events-none">
+          {SECTIONS.map((section, idx) => (
+            <div key={idx} ref={(el) => { badgeRefs.current[idx] = el; }} className="absolute -top-10 opacity-0">
+              <div className="px-5 py-2 rounded-full border border-white/20 backdrop-blur-md bg-black/40 text-white text-[11px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-2xl">
+                <svg className="w-3 h-3" style={{ color: section.labelColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+                {section.label}
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div ref={ribbonRef} className="absolute top-0 left-0 w-full flex flex-col will-change-transform">
-
           {SECTIONS.map((section, index) => {
             const isEdge = index === 0 || index === SECTIONS.length - 1;
             const panelHeightClass = isEdge ? 'h-screen' : 'h-[80vh]';
             const bgHeightClass = isEdge ? 'h-[130vh] -top-[15vh]' : 'h-[130vh] -top-[20vh]';
 
             return (
-              <div
-                key={section.number}
-                ref={(el) => { panelRefs.current[index] = el; }}
-                className={`relative w-full ${panelHeightClass} overflow-hidden select-none`}
-              >
-                <div
-                  ref={(el) => { bgRefs.current[index] = el; }}
-                  className={`absolute w-full left-0 will-change-transform overflow-hidden ${bgHeightClass}`}
-                >
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url("${section.bgImage}")` }}
-                  />
-                  {/* Subtle darkening for better text contrast */}
+              <div key={section.number} ref={(el) => { panelRefs.current[index] = el; }} className={`relative w-full ${panelHeightClass} overflow-hidden select-none`}>
+                <div ref={(el) => { bgRefs.current[index] = el; }} className={`absolute w-full left-0 will-change-transform overflow-hidden ${bgHeightClass}`}>
+                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${section.bgImage}")` }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/60 z-[1]" />
                 </div>
-
               </div>
             );
           })}
@@ -326,17 +305,9 @@ export default function FloemaStylePage() {
                 </span>
               </div>
 
-              {/* Dynamic Tag Indicator */}
-              <div className="px-5 py-2 rounded-full border border-white/20 backdrop-blur-md bg-black/40 text-white text-[12px] font-bold tracking-widest uppercase mb-6 flex items-center gap-3 select-none pointer-events-none will-change-[transform,opacity,filter] var(--font-inter) shadow-lg">
-                <svg className="w-3.5 h-3.5" style={{ color: section.labelColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
-                </svg>
-                {section.label}
-              </div>
-
               {/* The God-Tier Dynamic Headline */}
               <h2
-                className={`text-white text-center max-w-5xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] will-change-[transform,opacity,filter] ${section.fontClass} ${section.textClass}`}
+                className={`animate-target text-white text-center max-w-5xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] will-change-[transform,opacity,filter] ${section.fontClass} ${section.textClass}`}
                 style={{
                   fontSize: 'clamp(2.5rem, 5vw, 5rem)',
                   lineHeight: '1.1'
@@ -348,17 +319,12 @@ export default function FloemaStylePage() {
           ))}
         </div>
 
-        {/* Center Progress Line */}
-        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[2px] bg-white/10 z-100 mix-blend-difference pointer-events-none px-4 md:px-0">
-          <div
-            ref={progressLineRef}
-            className="h-full bg-white will-change-[width] shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-            style={{ width: '0%' }}
-          />
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-white/10 z-[100] mix-blend-difference pointer-events-none px-4 md:px-0">
+          <div ref={progressLineRef} className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: '0%' }} />
         </div>
 
         {/* Z-INDEX 70: THE OMNIBOX MASK (PALING DEPAN DI AWAL) */}
-        <div ref={maskLayerRef} className="absolute inset-0 z-70 flex items-center justify-center pointer-events-none origin-center">
+        <div ref={maskLayerRef} className="absolute inset-0 z-[70] flex items-center justify-center pointer-events-none origin-center">
           <svg viewBox="0 0 1000 800" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
             <defs>
               <mask id="omniFormatMask">
