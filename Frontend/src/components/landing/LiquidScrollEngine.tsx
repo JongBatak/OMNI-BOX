@@ -11,8 +11,9 @@ import IndependentSocial from './IndependentSocial';
 import SocialDataSection from './SocialDataSection';
 import VelocityMarquee from './VelocityMarquee';
 import CtaSection from './CtaSection';
-import EpicFooter from './EpicFooter';
+import Footer from './SiteFooter';
 import LaserTransition from './LaserTransition';
+import CinematicOmniBox from './CinematicOmniBox';
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, ScrollSmoother, useGSAP);
@@ -148,13 +149,15 @@ export default function LiquidScrollEngine({ isLoaded = true }: { isLoaded?: boo
           {/* ============================== */}
 
           <section className="relative w-full overflow-hidden">
-            <VelocityMarquee />
+            <VelocityMarquee>
+              <CinematicOmniBox />
+            </VelocityMarquee>
           </section>
 
           <section className="relative w-full overflow-hidden bg-[#0a0a0c]">
             <div className="min-h-full flex flex-col">
               <CtaSection />
-              <EpicFooter />
+              <Footer />
             </div>
           </section>
 

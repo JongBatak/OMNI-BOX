@@ -95,8 +95,10 @@ function Navbar() {
 // ─────────────────────────────────────────────────────────────
 // MAIN ENGINE COMPONENT
 // ─────────────────────────────────────────────────────────────
-export default function FloemaStylePage() {
+export default function VelocityMarquee({ children }: { children?: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const marqueeContentRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const ribbonRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const bgRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -145,7 +147,7 @@ export default function FloemaStylePage() {
     master.to(ribbonEl, {
       y: () => -(ribbonEl.scrollHeight - window.innerHeight),
       ease: 'none',
-      duration: 2.5,
+      duration: 5.0, // Increased to keep scroll feel natural
     }, 1.0);
 
     const p = 0.15;
@@ -166,7 +168,7 @@ export default function FloemaStylePage() {
           return (maxScroll - T_i) * (1 - p);
         },
         ease: 'none',
-        duration: 2.5,
+        duration: 5.0, // Match ribbon duration
       }, 1.0);
     });
 
@@ -174,7 +176,7 @@ export default function FloemaStylePage() {
       master.to(progressLineRef.current, {
         width: '100%',
         ease: 'none',
-        duration: 2.5,
+        duration: 5.0, // Match ribbon duration
       }, 1.0);
     }
 
@@ -231,24 +233,57 @@ export default function FloemaStylePage() {
       onUpdate: (self) => {
         const progress = self.progress;
 
-        // Define thresholds based on the master timeline's duration (total 3.5s)
-        // Mask animation is 0 to 1.0. Ribbon scroll is 1.0 to 3.5.
+        // Total duration is now 9.2s
+        // 0.0 - 1.0s: Mask scales up (progress 0.0 - 0.11)
+        // 1.0 - 6.0s: Ribbon scrolls (progress 0.11 - 0.65)
+        // 6.0 - 7.0s: 1s delay to read text (progress 0.65 - 0.76)
+        // 7.0 - 7.5s: Blur/Blackout transition (progress 0.76 - 0.81)
+        // 7.5 - 7.7s: Pure blackout (progress 0.81 - 0.83)
+        // 7.7 - 9.2s: Portal fade in (progress 0.83 - 1.0)
 
-        if (progress <= 0.10) {
+        if (progress <= 0.11) {
           showTextAndBadge(-1);
-        } else if (progress > 0.10 && progress < 0.30) {
+        } else if (progress > 0.11 && progress < 0.21) {
           showTextAndBadge(0);
-        } else if (progress >= 0.30 && progress < 0.50) {
+        } else if (progress >= 0.21 && progress < 0.32) {
           showTextAndBadge(1);
-        } else if (progress >= 0.50 && progress < 0.70) {
+        } else if (progress >= 0.32 && progress < 0.43) {
           showTextAndBadge(2);
-        } else if (progress >= 0.70 && progress < 0.90) {
+        } else if (progress >= 0.43 && progress < 0.54) {
           showTextAndBadge(3);
-        } else if (progress >= 0.90) {
+        } else if (progress >= 0.54) {
+          // Text 4 appears and stays fixed during pause and blackout
           showTextAndBadge(4);
         }
       }
     });
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. MOTION BRIDGE (The Cinematic Secret)
+    // ─────────────────────────────────────────────────────────────
+    if (marqueeContentRef.current && portalRef.current) {
+      // 1. Fade to Blackout
+      master.to(marqueeContentRef.current, {
+        autoAlpha: 0, // This hides visibility, fixing pointer-events blocking
+        filter: 'blur(10px)',
+        scale: 1,
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, "+=1.0"); // 1 second of pause reading "THAT'S WHY WE BUILT—"
+
+      // 2. Slow reveal of the Cinematic OmniBox from the blackout
+      master.fromTo(portalRef.current, {
+        opacity: 0,
+        y: 60,
+        scale: 0.95
+      }, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 1.5,
+        ease: 'power3.out'
+      }, ">+=0.2"); // Starts 0.2s AFTER the blackout finishes (">" means end of previous tween)
+    }
 
   }, { scope: containerRef });
 
@@ -258,105 +293,115 @@ export default function FloemaStylePage() {
 
       <div ref={containerRef} className="relative h-screen w-full bg-[#0a0a0c] overflow-hidden">
 
-        {/* Fixed Badge Container */}
-        <div className="absolute top-[42%] left-20 md:left-32 z-[150] pointer-events-none">
-          {SECTIONS.map((section, idx) => (
-            <div key={idx} ref={(el) => { badgeRefs.current[idx] = el; }} className="absolute -top-10 opacity-0">
-              <div className="px-5 py-2 rounded-full border border-white/20 backdrop-blur-md bg-black/40 text-white text-[11px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-2xl">
-                <svg className="w-3 h-3" style={{ color: section.labelColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
-                {section.label}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div ref={ribbonRef} className="absolute top-0 left-0 w-full flex flex-col will-change-transform">
-          {SECTIONS.map((section, index) => {
-            const isEdge = index === 0 || index === SECTIONS.length - 1;
-            const panelHeightClass = isEdge ? 'h-screen' : 'h-[80vh]';
-            const bgHeightClass = isEdge ? 'h-[130vh] -top-[15vh]' : 'h-[130vh] -top-[20vh]';
-
-            return (
-              <div key={section.number} ref={(el) => { panelRefs.current[index] = el; }} className={`relative w-full ${panelHeightClass} overflow-hidden select-none`}>
-                <div ref={(el) => { bgRefs.current[index] = el; }} className={`absolute w-full left-0 will-change-transform overflow-hidden ${bgHeightClass}`}>
-                  <Image
-                    src={section.bgImage}
-                    alt={section.headline}
-                    fill
-                    sizes="100vw"
-                    priority={index === 0}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    quality={75}
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/60 z-[1]" />
+        {/* THE MARQUEE CONTENT LAYER */}
+        <div ref={marqueeContentRef} className="absolute inset-0 z-20 will-change-transform">
+          {/* Fixed Badge Container */}
+          <div className="absolute top-[42%] left-20 md:left-32 z-[150] pointer-events-none">
+            {SECTIONS.map((section, idx) => (
+              <div key={idx} ref={(el) => { badgeRefs.current[idx] = el; }} className="absolute -top-10 opacity-0">
+                <div className="px-5 py-2 rounded-full border border-white/20 backdrop-blur-md bg-black/40 text-white text-[11px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-2xl">
+                  <svg className="w-3 h-3" style={{ color: section.labelColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+                  {section.label}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        {/* OVERLAY TEXT (Fixed to Viewport, animated by GSAP) */}
-        <div className="absolute inset-0 pointer-events-none z-[10]">
-          {SECTIONS.map((section, index) => (
-            <div
-              key={`content-${section.number}`}
-              ref={(el) => { contentRefs.current[index] = el; }}
-              className="absolute inset-0 flex flex-col items-center justify-center px-6"
-            >
-              {/* Side Indicators */}
-              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold tracking-widest select-none pointer-events-none will-change-[transform,opacity,filter] var(--font-inter)">
-                {section.number}
-              </div>
+          <div ref={ribbonRef} className="absolute top-0 left-0 w-full flex flex-col will-change-transform">
+            {SECTIONS.map((section, index) => {
+              const isEdge = index === 0 || index === SECTIONS.length - 1;
+              const panelHeightClass = isEdge ? 'h-screen' : 'h-[80vh]';
+              const bgHeightClass = isEdge ? 'h-[130vh] -top-[15vh]' : 'h-[130vh] -top-[20vh]';
 
-              <div className="absolute left-8 top-[60%] flex flex-col items-center gap-4 text-white/60 select-none pointer-events-none will-change-[transform,opacity,filter]">
-                <div className="w-[1px] h-12 bg-white/40" />
-                <span className="text-[10px] tracking-[0.3em] font-bold uppercase origin-left -rotate-90 whitespace-nowrap mt-20 var(--font-inter)">
-                  {section.tagline}
-                </span>
-              </div>
+              return (
+                <div key={section.number} ref={(el) => { panelRefs.current[index] = el; }} className={`relative w-full ${panelHeightClass} overflow-hidden select-none`}>
+                  <div ref={(el) => { bgRefs.current[index] = el; }} className={`absolute w-full left-0 will-change-transform overflow-hidden ${bgHeightClass}`}>
+                    <Image
+                      src={section.bgImage}
+                      alt={section.headline}
+                      fill
+                      sizes="100vw"
+                      priority={index === 0}
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      quality={75}
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/60 z-[1]" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-              {/* The God-Tier Dynamic Headline */}
-              <h2
-                className={`animate-target text-white text-center max-w-5xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] will-change-[transform,opacity,filter] ${section.fontClass} ${section.textClass}`}
-                style={{
-                  fontSize: 'clamp(2.5rem, 5vw, 5rem)',
-                  lineHeight: '1.1'
-                }}
+          {/* OVERLAY TEXT (Fixed to Viewport, animated by GSAP) */}
+          <div className="absolute inset-0 pointer-events-none z-[10]">
+            {SECTIONS.map((section, index) => (
+              <div
+                key={`content-${section.number}`}
+                ref={(el) => { contentRefs.current[index] = el; }}
+                className="absolute inset-0 flex flex-col items-center justify-center px-6"
               >
-                {section.headline}
-              </h2>
-            </div>
-          ))}
+                {/* Side Indicators */}
+                <div className="absolute left-8 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold tracking-widest select-none pointer-events-none will-change-[transform,opacity,filter] var(--font-inter)">
+                  {section.number}
+                </div>
+
+                <div className="absolute left-8 top-[60%] flex flex-col items-center gap-4 text-white/60 select-none pointer-events-none will-change-[transform,opacity,filter]">
+                  <div className="w-[1px] h-12 bg-white/40" />
+                  <span className="text-[10px] tracking-[0.3em] font-bold uppercase origin-left -rotate-90 whitespace-nowrap mt-20 var(--font-inter)">
+                    {section.tagline}
+                  </span>
+                </div>
+
+                {/* The God-Tier Dynamic Headline */}
+                <h2
+                  className={`animate-target text-white text-center max-w-5xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] will-change-[transform,opacity,filter] ${section.fontClass} ${section.textClass}`}
+                  style={{
+                    fontSize: 'clamp(2.5rem, 5vw, 5rem)',
+                    lineHeight: '1.1'
+                  }}
+                >
+                  {section.headline}
+                </h2>
+              </div>
+            ))}
+          </div>
+
+          <div className="absolute top-1/2 left-0 w-full h-[1px] bg-white/10 z-[100] mix-blend-difference pointer-events-none px-4 md:px-0">
+            <div ref={progressLineRef} className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: '0%' }} />
+          </div>
+
+          {/* Z-INDEX 70: THE OMNIBOX MASK (PALING DEPAN DI AWAL) */}
+          <div ref={maskLayerRef} className="absolute inset-0 z-[70] flex items-center justify-center pointer-events-none origin-center">
+            <svg viewBox="0 0 1000 800" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <mask id="omniFormatMask">
+                  <rect width="100%" height="100%" fill="white" />
+                  <text x="50%" y="220" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '38px', letterSpacing: '0.25em' }}>YOUR OMNI-FORMAT</text>
+                  <g stroke="black" strokeWidth="14" strokeLinejoin="round" strokeLinecap="round" fill="none">
+                    <polygon points="500,260 620,330 620,470 500,540 380,470 380,330" />
+                    <line x1="500" y1="260" x2="500" y2="400" />
+                    <line x1="620" y1="470" x2="500" y2="400" />
+                    <line x1="380" y1="470" x2="500" y2="400" />
+                    <line x1="620" y1="330" x2="500" y2="400" />
+                    <line x1="380" y1="330" x2="500" y2="400" />
+                    <line x1="500" y1="540" x2="500" y2="400" />
+                  </g>
+                  <circle cx="500" cy="400" r="25" fill="black" />
+                  <text x="50%" y="640" textAnchor="middle" fill="black" style={{ fontFamily: "'PP Editorial New', serif", fontSize: '90px', letterSpacing: '-0.02em' }}>GALLERY</text>
+                </mask>
+              </defs>
+              <rect width="100%" height="100%" fill="white" mask="url(#omniFormatMask)" />
+            </svg>
+          </div>
         </div>
 
-        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-white/10 z-[100] mix-blend-difference pointer-events-none px-4 md:px-0">
-          <div ref={progressLineRef} className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: '0%' }} />
-        </div>
-
-        {/* Z-INDEX 70: THE OMNIBOX MASK (PALING DEPAN DI AWAL) */}
-        <div ref={maskLayerRef} className="absolute inset-0 z-[70] flex items-center justify-center pointer-events-none origin-center">
-          <svg viewBox="0 0 1000 800" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <mask id="omniFormatMask">
-                <rect width="100%" height="100%" fill="white" />
-                <text x="50%" y="220" textAnchor="middle" fill="black" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: '38px', letterSpacing: '0.25em' }}>YOUR OMNI-FORMAT</text>
-                <g stroke="black" strokeWidth="14" strokeLinejoin="round" strokeLinecap="round" fill="none">
-                  <polygon points="500,260 620,330 620,470 500,540 380,470 380,330" />
-                  <line x1="500" y1="260" x2="500" y2="400" />
-                  <line x1="620" y1="470" x2="500" y2="400" />
-                  <line x1="380" y1="470" x2="500" y2="400" />
-                  <line x1="620" y1="330" x2="500" y2="400" />
-                  <line x1="380" y1="330" x2="500" y2="400" />
-                  <line x1="500" y1="540" x2="500" y2="400" />
-                </g>
-                <circle cx="500" cy="400" r="25" fill="black" />
-                <text x="50%" y="640" textAnchor="middle" fill="black" style={{ fontFamily: "'PP Editorial New', serif", fontSize: '90px', letterSpacing: '-0.02em' }}>GALLERY</text>
-              </mask>
-            </defs>
-            <rect width="100%" height="100%" fill="white" mask="url(#omniFormatMask)" />
-          </svg>
-        </div>
+        {/* THE PORTAL LAYER (CinematicOmniBox) */}
+        {children && (
+          <div ref={portalRef} className="absolute inset-0 z-10 w-full h-full opacity-0">
+            {children}
+          </div>
+        )}
       </div>
     </>
   );

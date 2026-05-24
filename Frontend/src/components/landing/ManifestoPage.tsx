@@ -1,32 +1,32 @@
 "use client";
 
-import React, { useRef, useEffect, useCallback, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import Footer from "./SiteFooter";
+import { motion } from "framer-motion";
 
-gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin);
+gsap.registerPlugin(ScrollTrigger);
 
-/* ─────────────────────────────────────────────
-   CUSTOM CURSOR
-───────────────────────────────────────────── */
-function CustomCursor({
-  cursorAPI,
-}: {
-  cursorAPI: React.MutableRefObject<{
-    expand: () => void;
-    collapse: () => void;
-  }>;
-}) {
+// The mechanical plate def from LoadingOverlay.tsx
+const complexPlatePaths = (
+  <>
+    <path d="M -37.56 -70.63 A 80 80 0 0 1 37.56 -70.63 L 21.12 -39.73 L 8 -39.73 L 0 -22 L -8 -39.73 L -21.12 -39.73 Z" fill="url(#bridgeGrad)" stroke="#3A0088" strokeWidth="1" strokeLinejoin="round" />
+    <path d="M 8 -39.73 L 0 -22 L -8 -39.73" fill="none" stroke="#00F0FF" strokeWidth="1.5" filter="url(#bridgeGlow)" />
+    <path d="M -20 -60 Q 0 -65 20 -60" fill="none" stroke="#7000FF" strokeWidth="1" opacity="0.4" />
+  </>
+);
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOM CURSOR
+// ─────────────────────────────────────────────────────────────
+const CustomCursor = React.memo(function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
   const posRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
   const rafRef = useRef<number | undefined>(undefined);
-  const expandedRef = useRef(false);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -35,9 +35,8 @@ function CustomCursor({
     window.addEventListener("mousemove", onMove);
 
     const tick = () => {
-      const speed = expandedRef.current ? 0.1 : 0.18;
-      currentRef.current.x += (posRef.current.x - currentRef.current.x) * speed;
-      currentRef.current.y += (posRef.current.y - currentRef.current.y) * speed;
+      currentRef.current.x += (posRef.current.x - currentRef.current.x) * 0.15;
+      currentRef.current.y += (posRef.current.y - currentRef.current.y) * 0.15;
 
       if (dotRef.current) {
         dotRef.current.style.transform = `translate(${posRef.current.x}px, ${posRef.current.y}px) translate(-50%, -50%)`;
@@ -56,678 +55,379 @@ function CustomCursor({
     };
   }, []);
 
-  // Expose expand/collapse
-  cursorAPI.current = {
-    expand: () => {
-      expandedRef.current = true;
-      if (ringRef.current && dotRef.current && textRef.current) {
-        gsap.to(ringRef.current, { width: 96, height: 96, borderColor: "#0000FF", duration: 0.4, ease: "power3.out" });
-        gsap.to(dotRef.current, { opacity: 0, duration: 0.2 });
-        gsap.to(textRef.current, { opacity: 1, duration: 0.3, delay: 0.1 });
-      }
-    },
-    collapse: () => {
-      expandedRef.current = false;
-      if (ringRef.current && dotRef.current && textRef.current) {
-        gsap.to(ringRef.current, { width: 32, height: 32, borderColor: "rgba(0,0,255,0.5)", duration: 0.4, ease: "power3.out" });
-        gsap.to(dotRef.current, { opacity: 1, duration: 0.2 });
-        gsap.to(textRef.current, { opacity: 0, duration: 0.15 });
-      }
-    },
-  };
-
   return (
     <>
-      {/* Dot */}
-      <div
-        ref={dotRef}
-        className="fixed top-0 left-0 z-[9999] pointer-events-none rounded-full bg-[#0000FF]"
-        style={{ width: 8, height: 8 }}
-      />
-      {/* Ring */}
-      <div
-        ref={ringRef}
-        className="fixed top-0 left-0 z-[9998] pointer-events-none rounded-full border flex items-center justify-center"
-        style={{
-          width: 32,
-          height: 32,
-          borderColor: "rgba(0,0,255,0.5)",
-          borderWidth: 1.5,
-        }}
-      >
-        <span
-          ref={textRef}
-          className="text-[7px] tracking-[0.15em] text-[#0000FF] font-mono uppercase opacity-0 select-none"
-          style={{ fontFamily: "'Courier New', monospace" }}
-        >
-          INITIATE
-        </span>
-      </div>
+      <div ref={dotRef} className="fixed top-0 left-0 z-[9999] pointer-events-none rounded-full bg-[#00f0ff] w-2 h-2 will-change-transform" />
+      <div ref={ringRef} className="fixed top-0 left-0 z-[9998] pointer-events-none rounded-full border border-[#00f0ff]/50 w-8 h-8 flex items-center justify-center will-change-transform" />
     </>
   );
-}
-
-/* ─────────────────────────────────────────────
-   NOISE OVERLAY
-───────────────────────────────────────────── */
-const NoiseOverlay = React.memo(function NoiseOverlay() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[9990]"
-      style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        opacity: 0.05,
-        mixBlendMode: "overlay",
-      }}
-    />
-  );
 });
 
-/* ─────────────────────────────────────────────
-   SCENE 1 — THE MANIFESTO DROP
-───────────────────────────────────────────── */
-const Scene1 = React.memo(function Scene1() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<HTMLDivElement>(null);
-  const manifestoRef = useRef<HTMLDivElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
+// ─────────────────────────────────────────────────────────────
+// SCENE 1: THE BRIDGE & ETYMOLOGY
+// ─────────────────────────────────────────────────────────────
+const SceneBridge = React.memo(function SceneBridge() {
+  const blackoutRef = useRef<HTMLDivElement>(null);
+  const coreRef = useRef<HTMLDivElement>(null);
+  const omniRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const quoteRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      if (!sectionRef.current || !nameRef.current || !manifestoRef.current || !wrapRef.current) return;
+  useGSAP(() => {
+    // 1. Cinematic Blackout Fade
+    gsap.to(blackoutRef.current, {
+      autoAlpha: 0,
+      duration: 2.0,
+      ease: "power2.inOut",
+      delay: 0.2
+    });
 
-      gsap.set(wrapRef.current, { scale: 1.2, autoAlpha: 0 });
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=250%",
-          pin: true,
-          scrub: 1,
-        },
-      });
-
-      // Phase 1: scale & reveal
-      tl.to(wrapRef.current, {
-        scale: 1,
-        autoAlpha: 1,
-        duration: 1,
-        ease: "power2.out",
-      });
-
-      // Brief pause
-      tl.to({}, { duration: 0.3 });
-
-      // Phase 2: split off screen
-      tl.to(
-        nameRef.current,
-        {
-          xPercent: -130,
-          opacity: 0,
-          duration: 1.2,
-          ease: "power3.inOut",
-        },
-        "split"
-      );
-      tl.to(
-        manifestoRef.current,
-        {
-          xPercent: 130,
-          opacity: 0,
-          duration: 1.2,
-          ease: "power3.inOut",
-        },
-        "split"
-      );
-    },
-    { scope: sectionRef }
-  );
-
-  return (
-    <section
-      ref={sectionRef}
-      className="pin-section h-screen w-full bg-[#050505] flex items-center justify-center overflow-hidden"
-    >
-      <div
-        ref={wrapRef}
-        className="text-center leading-none select-none"
-        style={{
-          fontFamily: "'Arial Black', 'Helvetica Neue', Impact, sans-serif",
-          fontWeight: 900,
-        }}
-      >
-        <div
-          ref={nameRef}
-          className="text-white block"
-          style={{
-            fontSize: "clamp(48px, 10vw, 140px)",
-            letterSpacing: "-0.03em",
-            lineHeight: 0.9,
-          }}
-        >
-          A NAME.
-        </div>
-        <div
-          ref={manifestoRef}
-          className="block mt-2"
-          style={{
-            fontSize: "clamp(40px, 8.5vw, 120px)",
-            letterSpacing: "-0.02em",
-            color: "#0000FF",
-            lineHeight: 0.9,
-          }}
-        >
-          A MANIFESTO.
-        </div>
-      </div>
-
-      {/* Corner labels */}
-      <span
-        className="absolute top-8 left-8 text-[10px] tracking-[0.4em] text-white/20 font-mono uppercase"
-        style={{ fontFamily: "'Courier New', monospace" }}
-      >
-        OMNIBOX / SEQUENCE_01
-      </span>
-      <span
-        className="absolute bottom-8 right-8 text-[10px] tracking-[0.4em] text-[#0000FF]/40 font-mono uppercase"
-        style={{ fontFamily: "'Courier New', monospace" }}
-      >
-        SCROLL TO REVEAL ↓
-      </span>
-    </section>
-  );
-});
-
-/* ─────────────────────────────────────────────
-   SCENE 2 — 3D ETYMOLOGY ILLUSION
-───────────────────────────────────────────── */
-const Scene2 = React.memo(function Scene2() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const omniboxRef = useRef<HTMLDivElement>(null);
-  const topHalfRef = useRef<HTMLDivElement>(null);
-  const bottomHalfRef = useRef<HTMLDivElement>(null);
-  const omniRevealRef = useRef<HTMLDivElement>(null);
-  const boxRevealRef = useRef<HTMLDivElement>(null);
-  const omniLineRef = useRef<SVGLineElement>(null);
-  const boxLineRef = useRef<SVGLineElement>(null);
-  const omniNodeRef = useRef<HTMLDivElement>(null);
-  const boxNodeRef = useRef<HTMLDivElement>(null);
-  const splitRowRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const nodesRowRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(
-    () => {
-      if (!sectionRef.current) return;
-
-      // Initial states
-      gsap.set([omniRevealRef.current, boxRevealRef.current], {
-        rotateX: 90,
-        opacity: 0,
-        transformOrigin: "center bottom",
-      });
-      gsap.set(splitRowRef.current, { opacity: 0 });
-      gsap.set(svgRef.current, { opacity: 0 });
-      gsap.set([omniNodeRef.current, boxNodeRef.current], { opacity: 0, y: 20 });
-      gsap.set(nodesRowRef.current, { opacity: 0 });
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=350%",
-          pin: true,
-          scrub: 1,
-        },
-      });
-
-      // Phase 1: split OMNIBOX top/bottom
-      tl.to(topHalfRef.current, {
-        y: -80,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.inOut",
-      });
-      tl.to(
-        bottomHalfRef.current,
-        {
-          y: 80,
-          opacity: 0,
-          duration: 1,
-          ease: "power3.inOut",
-        },
-        "<"
-      );
-      tl.to(omniboxRef.current, { opacity: 0, duration: 0.3 }, "<0.7");
-
-      // Phase 2: rotate in OMNI / BOX
-      tl.to(splitRowRef.current, { opacity: 1, duration: 0.2 });
-      tl.to(
-        [omniRevealRef.current, boxRevealRef.current],
-        {
-          rotateX: 0,
-          opacity: 1,
-          duration: 1.2,
-          ease: "back.out(1.2)",
-          stagger: 0.15,
-        },
-        "-=0.1"
-      );
-
-      // Phase 3: SVG lines draw
-      tl.to({}, { duration: 0.3 });
-      tl.to(svgRef.current, { opacity: 1, duration: 0.4 });
-
-      // Animate SVG lines via drawSVG
-      if (omniLineRef.current && boxLineRef.current) {
-        tl.fromTo(
-          [omniLineRef.current, boxLineRef.current],
-          { drawSVG: "0%" },
-          { drawSVG: "100%", duration: 1, stagger: 0.1, ease: "power2.inOut" },
-          "-=0.2"
-        );
+    // 2. Anchor Spin & Reveal
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: "+=200%",
+        scrub: 1,
+        pin: true,
       }
+    });
 
-      // Phase 4: nodes appear
-      tl.to(nodesRowRef.current, { opacity: 1, duration: 0.3 });
-      tl.to(
-        [omniNodeRef.current, boxNodeRef.current],
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.12,
-          ease: "power3.out",
-        },
-        "-=0.1"
-      );
-    },
-    { scope: sectionRef }
-  );
+    tl.fromTo(coreRef.current,
+      { scale: 1.5, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 1, ease: "power2.out" }
+    );
+
+    tl.fromTo([omniRef.current, boxRef.current],
+      { opacity: 0, x: (i) => i === 0 ? 50 : -50, filter: "blur(10px)" },
+      { opacity: 1, x: 0, filter: "blur(0px)", duration: 1, ease: "power2.out", stagger: 0.2 },
+      "<0.3"
+    );
+
+    tl.fromTo(quoteRef.current,
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 1 },
+      ">"
+    );
+
+    // Fade out everything to go to next scene
+    tl.to([coreRef.current, omniRef.current, boxRef.current, quoteRef.current], {
+      opacity: 0,
+      y: -50,
+      duration: 1,
+      ease: "power2.in"
+    });
+
+  }, { scope: containerRef });
 
   return (
-    <section
-      ref={sectionRef}
-      className="pin-section h-screen w-full bg-[#050505] flex flex-col items-center justify-center overflow-hidden relative"
-    >
-      {/* OMNIBOX full word (top/bottom halves clipped) */}
-      <div
-        ref={omniboxRef}
-        className="relative select-none"
-        style={{
-          fontFamily: "'Arial Black', 'Helvetica Neue', Impact, sans-serif",
-          fontWeight: 900,
-          fontSize: "clamp(60px, 12vw, 160px)",
-          letterSpacing: "-0.03em",
-          color: "#FFFFFF",
-          lineHeight: 1,
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        {/* Top half */}
-        <div
-          ref={topHalfRef}
-          className="absolute inset-0 overflow-hidden"
-          style={{ clipPath: "inset(0 0 50% 0)" }}
-        >
-          OMNIBOX
-        </div>
-        {/* Bottom half */}
-        <div
-          ref={bottomHalfRef}
-          className="absolute inset-0 overflow-hidden"
-          style={{ clipPath: "inset(50% 0 0 0)" }}
-        >
-          OMNIBOX
-        </div>
-        {/* Spacer */}
-        <div style={{ opacity: 0 }}>OMNIBOX</div>
+    <section ref={containerRef} className="h-screen w-full flex flex-col items-center justify-center bg-[#050505] relative overflow-hidden">
+      {/* The pure black bridge overlay */}
+      <div ref={blackoutRef} className="absolute inset-0 bg-black z-50" />
+
+      {/* Top Tag */}
+      <div className="absolute top-12 text-[#00f0ff]/40 text-xs tracking-[0.4em] font-sans font-bold">
+        INITIATING PROTOCOL / 001
       </div>
 
-      {/* Split row: OMNI — BOX */}
-      <div
-        ref={splitRowRef}
-        className="flex items-end justify-center gap-16 md:gap-32 w-full px-8"
-        style={{ perspective: "800px" }}
-      >
-        {/* OMNI */}
-        <div
-          ref={omniRevealRef}
-          className="text-center"
-          style={{
-            fontFamily: "'Arial Black', 'Helvetica Neue', Impact, sans-serif",
-            fontWeight: 900,
-            fontSize: "clamp(48px, 9vw, 120px)",
-            color: "#FFFFFF",
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
-          }}
-        >
-          OMNI
-        </div>
+      <div className="absolute inset-0 flex items-center justify-center z-20">
+        <div className="flex items-center justify-center">
+          <div ref={omniRef} className="text-white text-5xl md:text-8xl font-black tracking-tighter will-change-transform" style={{ fontFamily: "var(--font-inter)" }}>
+            OMNI
+          </div>
 
-        {/* Separator */}
-        <div
-          className="text-[#0000FF]/30 select-none"
-          style={{
-            fontSize: "clamp(36px, 6vw, 80px)",
-            fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
-            fontWeight: 900,
-            alignSelf: "center",
-            lineHeight: 1,
-          }}
-        >
-          /
-        </div>
+          <div ref={coreRef} className="relative w-16 h-16 md:w-32 md:h-32 mx-4 md:mx-8 flex items-center justify-center will-change-transform">
+            <motion.div className="w-full h-full" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 20, ease: "linear" }}>
+              <svg viewBox="-100 -100 200 200" className="w-full h-full overflow-visible">
+                <defs>
+                  <linearGradient id="bridgeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#1A2035" />
+                    <stop offset="100%" stopColor="#04060A" />
+                  </linearGradient>
+                  <filter id="bridgeGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                  <g id="bridge-plate">
+                    {complexPlatePaths}
+                  </g>
+                </defs>
+                <circle cx="0" cy="0" r="100" fill="#030408" />
+                <circle r="88" fill="none" stroke="#00F0FF" strokeWidth="1" strokeDasharray="70 22.15" transform="rotate(15)" opacity="0.6" />
+                <circle r="93" fill="none" stroke="#7000FF" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.8" />
+                <use href="#bridge-plate" transform="rotate(0)" />
+                <use href="#bridge-plate" transform="rotate(60)" />
+                <use href="#bridge-plate" transform="rotate(120)" />
+                <use href="#bridge-plate" transform="rotate(180)" />
+                <use href="#bridge-plate" transform="rotate(240)" />
+                <use href="#bridge-plate" transform="rotate(300)" />
+                <circle r="28" fill="none" stroke="#4A00E0" strokeWidth="1" strokeDasharray="3 4" opacity="0.8" />
+                <polygon points="0,-10 8.66,-5 8.66,5 0,10 -8.66,5 -8.66,-5" fill="#00D2FF" filter="url(#bridgeGlow)" />
+              </svg>
+            </motion.div>
+          </div>
 
-        {/* BOX */}
-        <div
-          ref={boxRevealRef}
-          className="text-center"
-          style={{
-            fontFamily: "'Arial Black', 'Helvetica Neue', Impact, sans-serif",
-            fontWeight: 900,
-            fontSize: "clamp(48px, 9vw, 120px)",
-            color: "#0000FF",
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
-          }}
-        >
-          BOX
+          <div ref={boxRef} className="text-[#e2e8f0] text-5xl md:text-8xl font-black tracking-tighter will-change-transform" style={{ fontFamily: "var(--font-inter)" }}>
+            BOX
+          </div>
         </div>
       </div>
 
-      {/* SVG Lines */}
-      <svg
-        ref={svgRef}
-        className="absolute top-0 left-0 w-full h-full pointer-events-none"
-        viewBox="0 0 1440 900"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        {/* Line from OMNI down */}
-        <line
-          ref={omniLineRef}
-          x1="390"
-          y1="500"
-          x2="390"
-          y2="680"
-          stroke="#0000FF"
-          strokeWidth="1"
-          opacity="0.7"
-        />
-        {/* Line from BOX down */}
-        <line
-          ref={boxLineRef}
-          x1="1050"
-          y1="500"
-          x2="1050"
-          y2="680"
-          stroke="#0000FF"
-          strokeWidth="1"
-          opacity="0.7"
-        />
-      </svg>
-
-      {/* Definition nodes */}
-      <div
-        ref={nodesRowRef}
-        className="absolute bottom-[8%] left-0 w-full flex justify-around px-8 md:px-24"
-      >
-        {/* Node 1 */}
-        <div
-          ref={omniNodeRef}
-          className="rounded border border-white/10 p-4 md:p-6 max-w-[280px]"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-          }}
-        >
-          <p
-            className="text-[#0000FF] text-[10px] tracking-[0.4em] mb-2 font-mono uppercase"
-            style={{ fontFamily: "'Courier New', monospace" }}
-          >
-            OMNI — adj.
-          </p>
-          <p
-            className="text-[15px] font-bold text-white mb-1"
-            style={{ fontFamily: "'Arial Black', sans-serif", letterSpacing: "-0.01em" }}
-          >
-            UNIVERSAL
-          </p>
-          <p
-            className="text-[11px] text-white/40 leading-relaxed"
-            style={{ fontFamily: "'Courier New', monospace" }}
-          >
-            All-encompassing. Without boundaries. A layer that exists everywhere simultaneously.
-          </p>
-        </div>
-
-        {/* Node 2 */}
-        <div
-          ref={boxNodeRef}
-          className="rounded border border-[#0000FF]/20 p-4 md:p-6 max-w-[280px]"
-          style={{
-            background: "rgba(0,0,255,0.04)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-          }}
-        >
-          <p
-            className="text-[#0000FF] text-[10px] tracking-[0.4em] mb-2 font-mono uppercase"
-            style={{ fontFamily: "'Courier New', monospace" }}
-          >
-            BOX — n.
-          </p>
-          <p
-            className="text-[15px] font-bold text-white mb-1"
-            style={{ fontFamily: "'Arial Black', sans-serif", letterSpacing: "-0.01em" }}
-          >
-            CONTAINER
-          </p>
-          <p
-            className="text-[11px] text-white/40 leading-relaxed"
-            style={{ fontFamily: "'Courier New', monospace" }}
-          >
-            The foundational environment. A hyper-secure perimeter holding infinite possibilities.
-          </p>
-        </div>
+      <div ref={quoteRef} className="absolute bottom-32 max-w-2xl text-center px-6 will-change-transform">
+        <p className="text-white/60 text-lg md:text-2xl font-serif italic tracking-wide leading-relaxed" style={{ fontFamily: "var(--font-playfair)" }}>
+          "Infinite possibilities require a flawless foundation. A paradox of total freedom within unbreakable structure."
+        </p>
       </div>
 
-      {/* Corner label */}
-      <span
-        className="absolute top-8 left-8 text-[10px] tracking-[0.4em] text-white/20 font-mono uppercase"
-        style={{ fontFamily: "'Courier New', monospace" }}
-      >
-        OMNIBOX / SEQUENCE_02
-      </span>
+      <div className="absolute bottom-12 flex flex-col items-center opacity-40 animate-pulse">
+        <span className="text-[9px] tracking-widest text-white mb-2 font-sans">SCROLL TO ASCEND</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-white to-transparent" />
+      </div>
     </section>
   );
 });
 
-/* ─────────────────────────────────────────────
-   SCENE 3 — WIREFRAME PARALLAX (unpinned)
-───────────────────────────────────────────── */
-const Scene3 = React.memo(function Scene3() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+// ─────────────────────────────────────────────────────────────
+// SCENE 2: THE PHILOSOPHY (STAR WARS LORE)
+// ─────────────────────────────────────────────────────────────
+const SceneLore = React.memo(function SceneLore() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const repRef = useRef<HTMLDivElement>(null);
+  const empRef = useRef<HTMLDivElement>(null);
+  const omniRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: "+=400%",
+        scrub: 1,
+        pin: true,
+      }
+    });
+
+    // Republic IN
+    tl.fromTo(repRef.current, { opacity: 0, y: 100, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 1 });
+    tl.to({}, { duration: 0.5 }); // pause
+    // Republic OUT, Empire IN
+    tl.to(repRef.current, { opacity: 0, y: -100, scale: 0.9, duration: 1 });
+    tl.fromTo(empRef.current, { opacity: 0, y: 100, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 1 }, "<");
+    tl.to({}, { duration: 0.5 }); // pause
+    // Empire OUT, Omni IN
+    tl.to(empRef.current, { opacity: 0, y: -100, scale: 0.9, duration: 1 });
+    tl.fromTo(omniRef.current, { opacity: 0, y: 100, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 1 }, "<");
+    tl.to({}, { duration: 1.0 }); // hold at end
+
+  }, { scope: containerRef });
+
+  return (
+    <section ref={containerRef} className="h-screen w-full bg-[#030408] relative flex items-center justify-center overflow-hidden">
+      {/* Background radial glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.03)_0%,transparent_60%)] pointer-events-none" />
+
+      {/* 1. THE REPUBLIC */}
+      <div ref={repRef} className="absolute inset-0 flex flex-col md:flex-row items-center justify-center max-w-6xl mx-auto px-8 gap-12 opacity-0 will-change-transform">
+        <div className="flex-1 flex justify-center">
+          <motion.div
+            className="w-64 h-64 md:w-96 md:h-96 opacity-60"
+            animate={{ y: [0, -20, 0], opacity: [0.6, 0.8, 0.6] }}
+            transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+          >
+            <div
+              className="w-full h-full"
+              style={{
+                maskImage: `url('/New republic.svg')`,
+                WebkitMaskImage: `url('/New republic.svg')`,
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center',
+                backgroundColor: '#00F0FF'
+              }}
+            />
+          </motion.div>
+        </div>
+        <div className="flex-1 space-y-6">
+          <h2 className="text-[#00F0FF] text-sm tracking-[0.4em] font-sans font-bold">I. THE REPUBLIC</h2>
+          <h3 className="text-white text-4xl md:text-5xl font-black leading-tight" style={{ fontFamily: "var(--font-inter)" }}><span className="text-[#00F0FF]">Flowing</span> Beautiful <br /><span className="text-[#9B59B6]">Fragile</span></h3>
+          <p className="text-white/60 text-xl leading-relaxed font-serif font-bold" style={{ fontFamily: "var(--font-playfair)" }}>
+            Idealism without structure. A system that bends to every whim eventually shatters under its own weight. Decentralization without a unifying foundation breeds chaos.
+          </p>
+        </div>
+      </div>
+
+      {/* 2. THE EMPIRE */}
+      <div ref={empRef} className="absolute inset-0 flex flex-col md:flex-row items-center justify-center max-w-6xl mx-auto px-8 gap-12 opacity-0 will-change-transform">
+        <div className="flex-1 flex justify-center">
+          <motion.div
+            className="w-64 h-64 md:w-96 md:h-96 opacity-60"
+            animate={{ rotate: 360, scale: [1, 1.05, 1] }}
+            transition={{ rotate: { repeat: Infinity, duration: 40, ease: "linear" }, scale: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
+          >
+            <div
+              className="w-full h-full"
+              style={{
+                maskImage: `url('/Emblem_of_the_First_Galactic_Empire.svg')`,
+                WebkitMaskImage: `url('/Emblem_of_the_First_Galactic_Empire.svg')`,
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center',
+                backgroundColor: '#FF4D4D'
+              }}
+            />
+          </motion.div>
+        </div>
+        <div className="flex-1 space-y-6">
+          <h2 className="text-[#FF4D4D] text-sm tracking-[0.4em] font-sans font-bold">II. THE EMPIRE</h2>
+          <h3 className="text-white text-4xl md:text-5xl font-black leading-tight" style={{ fontFamily: "var(--font-inter)" }}><span className="text-[#F1C40F]">Order</span> through <br /><span className="text-[#FF4D4D]">Oppression</span></h3>
+          <p className="text-white/60 text-xl leading-relaxed font-serif font-bold" style={{ fontFamily: "var(--font-playfair)" }}>
+            A rigid, unyielding monolith. All nodes locked into a dictatorial core. It prevents chaos, but suffocates independence. It is a structure built on fear, incapable of evolution.
+          </p>
+        </div>
+      </div>
+
+      {/* 3. THE OMNI BOX (SEPARATIST) */}
+      <div ref={omniRef} className="absolute inset-0 flex flex-col md:flex-row items-center justify-center max-w-6xl mx-auto px-8 gap-12 opacity-0 will-change-transform">
+        <div className="flex-1 flex justify-center">
+          <div className="w-64 h-64 md:w-96 md:h-96 relative flex items-center justify-center">
+            <motion.div className="w-full h-full" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 30, ease: "linear" }}>
+              <svg viewBox="-100 -100 200 200" className="w-full h-full overflow-visible">
+                <defs>
+                  <linearGradient id="omniGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#1A2035" />
+                    <stop offset="100%" stopColor="#04060A" />
+                  </linearGradient>
+                  <filter id="omniGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                  <g id="omni-plate">
+                    <path d="M -37.56 -70.63 A 80 80 0 0 1 37.56 -70.63 L 21.12 -39.73 L 8 -39.73 L 0 -22 L -8 -39.73 L -21.12 -39.73 Z" fill="url(#omniGrad)" stroke="#00F0FF" strokeWidth="1.5" strokeLinejoin="round" />
+                    <path d="M 8 -39.73 L 0 -22 L -8 -39.73" fill="none" stroke="#00D2FF" strokeWidth="1.5" filter="url(#omniGlow)" />
+                  </g>
+                </defs>
+                <circle cx="0" cy="0" r="100" fill="#030408" />
+                <circle r="88" fill="none" stroke="#00F0FF" strokeWidth="1" strokeDasharray="70 22.15" transform="rotate(15)" opacity="0.6" />
+                <circle r="93" fill="none" stroke="#7000FF" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.8" />
+                <use href="#omni-plate" transform="rotate(0)" />
+                <use href="#omni-plate" transform="rotate(60)" />
+                <use href="#omni-plate" transform="rotate(120)" />
+                <use href="#omni-plate" transform="rotate(180)" />
+                <use href="#omni-plate" transform="rotate(240)" />
+                <use href="#omni-plate" transform="rotate(300)" />
+                <circle r="28" fill="none" stroke="#4A00E0" strokeWidth="1" strokeDasharray="3 4" opacity="0.8" />
+                <polygon points="0,-10 8.66,-5 8.66,5 0,10 -8.66,5 -8.66,-5" fill="#00D2FF" filter="url(#omniGlow)" />
+              </svg>
+            </motion.div>
+          </div>
+        </div>
+        <div className="flex-1 space-y-6">
+          <h2 className="text-[#00f0ff] text-sm tracking-[0.4em] font-sans font-bold">III. TRUE AUTONOMY</h2>
+          <h3 className="text-white text-4xl md:text-5xl font-black leading-tight" style={{ fontFamily: "var(--font-inter)" }}>The Omni <br /><span className="text-[#00f0ff]">Box</span></h3>
+          <p className="text-white/80 text-xl leading-relaxed font-serif font-bold" style={{ fontFamily: "var(--font-playfair)" }}>
+            Six independent plates, perfectly balanced. They do not touch. They are not locked by a rigid frame. Yet they orbit a shared, impenetrable core.
+          </p>
+          <p className="text-white/50 text-base leading-relaxed font-sans mt-4">
+            This is the Separatist ideal realized. It takes the mathematical structure of the Empire but shatters the tyranny. It represents decentralized synergy modular freedom bound by a collective foundation.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+// ─────────────────────────────────────────────────────────────
+// SCENE 3: THE CALL TO ACTION (CTA)
+// ─────────────────────────────────────────────────────────────
+const SceneCTA = React.memo(function SceneCTA() {
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const platesRef = useRef<SVGGElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const cubeRef = useRef<SVGSVGElement>(null);
+  const glowRef = useRef<SVGCircleElement>(null);
 
-  useGSAP(
-    () => {
-      if (!sectionRef.current) return;
+  useGSAP(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ctaRef.current,
+        start: "top top",
+        end: "+=150%",
+        scrub: 1,
+        pin: true,
+      }
+    });
 
-      // Parallax: text scrolls up slowly
-      gsap.to(textRef.current, {
-        yPercent: -20,
-        ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1,
-        },
+    // Animate plates pushing outwards and core igniting
+    if (platesRef.current) {
+      const plates = gsap.utils.toArray(platesRef.current.children) as SVGUseElement[];
+
+      tl.to(plates, {
+        x: (i) => Math.cos((i * 60 - 90) * (Math.PI / 180)) * 50,
+        y: (i) => Math.sin((i * 60 - 90) * (Math.PI / 180)) * 50,
+        duration: 1.5,
+        ease: "power2.inOut",
       });
+    }
 
-      // Cube scales up and rotates
-      gsap.fromTo(
-        cubeRef.current,
-        { rotateX: -10, rotateY: -20, scale: 0.6, opacity: 0.3 },
-        {
-          rotateX: 15,
-          rotateY: 30,
-          scale: 1.6,
-          opacity: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1,
-          },
-        }
-      );
-    },
-    { scope: sectionRef }
-  );
+    tl.to(glowRef.current, { r: 150, opacity: 0.8, duration: 1.5, ease: "power2.inOut" }, "<");
+
+    tl.fromTo(textRef.current,
+      { opacity: 0, scale: 0.8, y: 50 },
+      { opacity: 1, scale: 1, y: 0, duration: 1.5, ease: "back.out(1.2)" },
+      "<0.5"
+    );
+
+  }, { scope: ctaRef });
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-screen w-full bg-[#050505] flex items-center justify-center overflow-hidden py-32"
-      style={{
-        background: "radial-gradient(ellipse at center, #030310 0%, #050505 70%)",
-      }}
-    >
-      {/* Background massive text */}
-      <div
-        ref={textRef}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        style={{ zIndex: 1 }}
-      >
-        <span
-          className="text-white/[0.04] select-none text-center leading-none"
-          style={{
-            fontFamily: "'Arial Black', 'Helvetica Neue', Impact, sans-serif",
-            fontWeight: 900,
-            fontSize: "clamp(80px, 16vw, 220px)",
-            letterSpacing: "-0.04em",
-            whiteSpace: "nowrap",
-          }}
-        >
-          BEYOND
-          <br />
-          THE GRID
-        </span>
+    <section ref={ctaRef} className="h-screen w-full bg-[#050505] relative flex flex-col items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+        <svg viewBox="-300 -300 600 600" className="w-[80vw] max-w-[800px] opacity-20">
+          <defs>
+            <linearGradient id="ctaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1A2035" />
+              <stop offset="100%" stopColor="#04060A" />
+            </linearGradient>
+            <filter id="ctaGlow">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <g id="cta-plate">
+              <path d="M -37.56 -70.63 A 80 80 0 0 1 37.56 -70.63 L 21.12 -39.73 L 8 -39.73 L 0 -22 L -8 -39.73 L -21.12 -39.73 Z" fill="url(#ctaGrad)" stroke="#00F0FF" strokeWidth="1.5" strokeLinejoin="round" />
+              <path d="M 8 -39.73 L 0 -22 L -8 -39.73" fill="none" stroke="#00D2FF" strokeWidth="1.5" filter="url(#ctaGlow)" />
+            </g>
+          </defs>
+          <circle cx="0" cy="0" r="100" fill="#030408" />
+          <circle r="88" fill="none" stroke="#00F0FF" strokeWidth="1" strokeDasharray="70 22.15" transform="rotate(15)" opacity="0.6" />
+          <g ref={platesRef}>
+            <use href="#cta-plate" transform="rotate(0)" />
+            <use href="#cta-plate" transform="rotate(60)" />
+            <use href="#cta-plate" transform="rotate(120)" />
+            <use href="#cta-plate" transform="rotate(180)" />
+            <use href="#cta-plate" transform="rotate(240)" />
+            <use href="#cta-plate" transform="rotate(300)" />
+          </g>
+          <circle ref={glowRef} r="0" fill="none" stroke="#00D2FF" strokeWidth="2" filter="url(#ctaGlow)" opacity="0" />
+        </svg>
       </div>
 
-      {/* Foreground large text */}
-      <div
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 text-center"
-        style={{ zIndex: 10 }}
-      >
-        <p
-          className="text-[10px] tracking-[0.5em] text-[#0000FF]/60 font-mono uppercase mb-4"
-          style={{ fontFamily: "'Courier New', monospace" }}
-        >
-          BEYOND THE GRID
-        </p>
-        <p
-          className="text-white/60 text-sm max-w-xs text-center leading-loose"
-          style={{ fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: "0.1em" }}
-        >
-          THE INFRASTRUCTURE THAT EXISTS<br />
-          BETWEEN ALL SYSTEMS
-        </p>
+      <div ref={textRef} className="z-10 text-center flex flex-col items-center will-change-transform">
+        <h2 className="text-[#00F0FF] text-sm tracking-[0.5em] font-sans font-bold mb-6">INITIATE CONNECTION</h2>
+        <h3 className="text-white text-6xl md:text-8xl font-black tracking-tighter" style={{ fontFamily: "var(--font-inter)" }}>
+          STEP INTO<br />THE CORE
+        </h3>
+        <button className="mt-12 px-12 py-4 border border-[#00F0FF]/40 bg-[#00F0FF]/10 text-white font-sans text-xs tracking-[0.3em] uppercase hover:bg-[#00F0FF]/20 hover:scale-105 transition-all duration-300 backdrop-blur-md">
+          Join the Network
+        </button>
       </div>
-
-      {/* Isometric Wireframe Cube SVG */}
-      <svg
-        ref={cubeRef}
-        viewBox="0 0 400 400"
-        fill="none"
-        className="relative z-20"
-        style={{
-          width: "min(70vw, 500px)",
-          height: "min(70vw, 500px)",
-          transformStyle: "preserve-3d",
-          filter: "drop-shadow(0 0 30px rgba(0,0,255,0.3))",
-        }}
-      >
-        {/* Isometric cube face — top */}
-        <polygon
-          points="200,60 340,140 200,220 60,140"
-          fill="none"
-          stroke="#0000FF"
-          strokeWidth="1"
-          opacity="0.8"
-        />
-        {/* Left face */}
-        <polygon
-          points="60,140 200,220 200,340 60,260"
-          fill="rgba(0,0,255,0.04)"
-          stroke="#0000FF"
-          strokeWidth="1"
-          opacity="0.6"
-        />
-        {/* Right face */}
-        <polygon
-          points="340,140 200,220 200,340 340,260"
-          fill="rgba(0,0,255,0.06)"
-          stroke="#0000FF"
-          strokeWidth="1"
-          opacity="0.6"
-        />
-        {/* Inner grid lines — top face */}
-        <line x1="200" y1="60" x2="200" y2="220" stroke="#0000FF" strokeWidth="0.5" opacity="0.3" />
-        <line x1="60" y1="140" x2="340" y2="140" stroke="#0000FF" strokeWidth="0.5" opacity="0.3" />
-        <line x1="130" y1="100" x2="270" y2="180" stroke="#0000FF" strokeWidth="0.5" opacity="0.2" />
-        <line x1="270" y1="100" x2="130" y2="180" stroke="#0000FF" strokeWidth="0.5" opacity="0.2" />
-        {/* Vertical edges */}
-        <line x1="200" y1="220" x2="200" y2="340" stroke="#FFFFFF" strokeWidth="0.5" opacity="0.2" />
-        {/* Corner dots */}
-        {[
-          [200, 60], [340, 140], [200, 220], [60, 140],
-          [200, 340], [60, 260], [340, 260],
-        ].map(([cx, cy], i) => (
-          <circle
-            key={i}
-            cx={cx}
-            cy={cy}
-            r="3"
-            fill="#0000FF"
-            opacity="0.9"
-          />
-        ))}
-        {/* Glow circle */}
-        <circle cx="200" cy="200" r="150" fill="none" stroke="#0000FF" strokeWidth="0.5" strokeDasharray="4 8" opacity="0.15" />
-      </svg>
-
-      {/* Corner label */}
-      <span
-        className="absolute top-8 left-8 text-[10px] tracking-[0.4em] text-white/20 font-mono uppercase"
-        style={{ fontFamily: "'Courier New', monospace" }}
-      >
-        OMNIBOX / SEQUENCE_03
-      </span>
     </section>
   );
 });
 
-/* ─────────────────────────────────────────────
-   ROOT MANIFESTO COMPONENT
-───────────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────
+// ROOT MANIFESTO COMPONENT
+// ─────────────────────────────────────────────────────────────
 export default function Manifesto() {
-  const cursorAPI = useRef<{ expand: () => void; collapse: () => void }>({
-    expand: () => { },
-    collapse: () => { },
-  });
-  
   const [supportsHover, setSupportsHover] = useState(false);
 
   useEffect(() => {
@@ -742,21 +442,15 @@ export default function Manifesto() {
         }
         html { scroll-behavior: auto; }
         body { background: #050505; overflow-x: hidden; }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
       `}</style>
 
-      <NoiseOverlay />
-      {supportsHover && <CustomCursor cursorAPI={cursorAPI} />}
+      {supportsHover && <CustomCursor />}
 
       <main>
-        <Scene1 />
-        <Scene2 />
-        <Scene3 />
-        <Footer cursorRef={cursorAPI} />
+        <SceneBridge />
+        <SceneLore />
+        <SceneCTA />
+        <Footer />
       </main>
     </>
   );
