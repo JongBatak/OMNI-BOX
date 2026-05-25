@@ -10,6 +10,11 @@ class FileController extends Controller
     public function upload(FileUploadRequest $request)
     {
         $file = $request->file('file');
+
+        if (!$file) {
+            return response()->json(['message' => 'File missing or exceeds server upload limits (e.g. post_max_size).'], 422);
+        }
+
         $path = $file->store('omnibox/' . $request->user()->id, 'public');
 
         $dbFile = $request->user()->files()->create([
