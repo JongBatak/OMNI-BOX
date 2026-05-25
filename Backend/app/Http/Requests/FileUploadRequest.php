@@ -7,7 +7,7 @@ class FileUploadRequest extends FormRequest
     public function authorize() { return true; }
     public function rules() {
         return [
-            'file' => 'required|file|max:512000',
+            'file' => 'required|file|max:1048576',
             'type' => 'required|string',
             'project_id' => 'nullable|exists:projects,id',
         ];

@@ -122,6 +122,8 @@ interface ApiFile {
   created_at?: string;
   updated_at?: string;
   url: string;
+  likes_count?: number;
+  comments?: any[];
   user?: {
     id: string;
     name: string;
@@ -147,12 +149,13 @@ const formatBytes = (bytes: number, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-const mapApiFileToWorkspace = (file: ApiFile): WorkspaceFile => ({
+const mapApiFileToWorkspace = (file: ApiFile, currentUserId?: string): WorkspaceFile => ({
   id: file.id.toString(),
   name: file.name,
   type: file.type as FileType,
   url: file.url,
-  size: formatBytes(file.size)
+  size: formatBytes(file.size),
+  isOwner: !file.is_community_shared || file.user_id === currentUserId
 });
 
 const PersonalGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFile) => void }) => {
@@ -283,10 +286,9 @@ const CommunityGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFi
               initial={{ opacity: 0, y: 10 }} 
               animate={{ opacity: 1, y: 0 }} 
               transition={{ delay: i * 0.1 }} 
-              onClick={() => onFileClick(mapApiFileToWorkspace(file))}
-              className="glass-panel p-4 rounded-3xl group cursor-pointer border border-white/10 hover:border-purple-500/50 transition-colors"
+              className="glass-panel p-4 rounded-3xl group border border-white/10 hover:border-purple-500/50 transition-colors flex flex-col"
             >
-              <div className="aspect-video rounded-2xl overflow-hidden mb-4 relative bg-black/40 flex items-center justify-center">
+              <div onClick={() => onFileClick(mapApiFileToWorkspace(file))} className="cursor-pointer aspect-video rounded-2xl overflow-hidden mb-4 relative bg-black/40 flex items-center justify-center">
                 {file.type === 'image' ? (
                   <Image src={file.url} alt={file.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
@@ -297,17 +299,39 @@ const CommunityGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFi
               <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-omni-blue to-purple-500" />
-                  <div className="max-w-[200px]">
+                  <div className="max-w-[150px]">
                     <p className="text-sm font-bold text-white truncate">{file.user?.name || 'Unknown'}</p>
                     <p className="text-xs text-omni-silver-dark truncate pr-2">{file.name}</p>
                   </div>
                 </div>
-                <div className="flex flex-shrink-0 items-center gap-3">
-                  <div className="flex items-center gap-1 group/btn">
-                    <Heart className="w-4 h-4 text-omni-silver-dark group-hover/btn:text-red-500 transition-colors" />
-                    <span className="text-[10px] text-omni-silver-dark font-bold">24</span>
+                <div className="flex flex-shrink-0 items-center gap-4">
+                  <div className="flex items-center gap-1 group/btn cursor-pointer" onClick={async () => {
+                     try {
+                        const token = localStorage.getItem('omnibox_token');
+                        await fetch(`/api/v1/files/${file.id}/like`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+                        setFiles(files.map(f => f.id === file.id ? { ...f, likes_count: (f.likes_count || 0) + 1 } : f));
+                     } catch(e) {}
+                  }}>
+                    <Heart className="w-4 h-4 text-omni-silver-dark hover:text-red-500 transition-colors" />
+                    <span className="text-[10px] text-omni-silver-dark font-bold">{file.likes_count || 0}</span>
                   </div>
-                  <Play className="w-5 h-5 text-omni-cyan opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex items-center gap-1 group/btn cursor-pointer" onClick={async () => {
+                     const content = window.prompt("Enter your comment:");
+                     if (content) {
+                        try {
+                          const token = localStorage.getItem('omnibox_token');
+                          await fetch(`/api/v1/files/${file.id}/comments`, { 
+                            method: 'POST', 
+                            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content })
+                          });
+                          setFiles(files.map(f => f.id === file.id ? { ...f, comments: [...(f.comments || []), { content }] } : f));
+                        } catch(e) {}
+                     }
+                  }}>
+                    <MessageCircle className="w-4 h-4 text-omni-silver-dark hover:text-omni-cyan transition-colors" />
+                    <span className="text-[10px] text-omni-silver-dark font-bold">{(file.comments || []).length}</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -584,6 +608,21 @@ export default function CustomerDashboard() {
     }
   };
 
+  const handleDeleteFile = async (id: string) => {
+    try {
+      const token = localStorage.getItem('omnibox_token');
+      const res = await fetch(`/api/v1/files/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error('Delete failed', e);
+    }
+  };
+
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setIsMounted(true); }, []);
 
@@ -777,6 +816,7 @@ export default function CustomerDashboard() {
         <DynamicFileWorkspace 
            file={activeWorkspaceFile} 
            onClose={() => setActiveWorkspaceFile(null)} 
+           onDelete={handleDeleteFile}
         />
       </main>
     </div>

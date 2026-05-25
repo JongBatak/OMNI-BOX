@@ -54,4 +54,20 @@ class FileController extends Controller
 
         return response()->json($files);
     }
+
+    public function destroy(Request $request, $id)
+    {
+        $file = File::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
+        
+        Storage::disk('public')->delete($file->path);
+        
+        $metrics = $request->user()->metrics;
+        if ($metrics) {
+            $metrics->decrement('storage_used', $file->size);
+        }
+        
+        $file->delete();
+        
+        return response()->json(['message' => 'File deleted successfully']);
+    }
 }

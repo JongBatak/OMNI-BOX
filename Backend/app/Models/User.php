@@ -19,5 +19,7 @@ class User extends Authenticatable
     public function projects() { return $this->hasMany(Project::class); }
     public function files() { return $this->hasMany(File::class); }
     public function metrics() { return $this->hasOne(UserMetric::class); }
+    public function likes() { return $this->hasMany(Like::class); }
+    public function comments() { return $this->hasMany(Comment::class); }
     public function isAdmin() { return $this->role === 'admin'; }
 }

@@ -13,8 +13,16 @@ class GalleryController extends Controller
      */
     public function getPersonalGallery(Request $request)
     {
-        $files = File::where('user_id', $request->user()->id)
-            ->orderBy('created_at', 'desc')
+        $query = File::where('user_id', $request->user()->id);
+
+        if ($request->has('search') && $request->search !== '') {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        if ($request->has('format') && $request->format !== '') {
+            $query->where('type', 'like', '%' . $request->format . '%');
+        }
+
+        $files = $query->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($file) => $this->appendUrl($file));
 
@@ -29,9 +37,18 @@ class GalleryController extends Controller
      */
     public function getCommunityGallery(Request $request)
     {
-        $files = File::with('user:id,name,email')
-            ->where('is_community_shared', true)
-            ->orderBy('created_at', 'desc')
+        $query = File::with(['user:id,name,email', 'comments.user:id,name'])
+            ->withCount('likes')
+            ->where('is_community_shared', true);
+
+        if ($request->has('search') && $request->search !== '') {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        if ($request->has('format') && $request->format !== '') {
+            $query->where('type', 'like', '%' . $request->format . '%');
+        }
+
+        $files = $query->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($file) => $this->appendUrl($file));
 

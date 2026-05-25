@@ -25,4 +25,29 @@ class AdminDashboardController extends Controller
             ]
         ]);
     }
+
+    public function getUsers(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $users = \App\Models\User::with('metrics')
+            ->withCount('files')
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'role' => $u->role,
+                    'storage_used' => $u->metrics ? $u->metrics->storage_used : 0,
+                    'storage_limit' => 15000000, // 15 GB
+                    'total_files' => $u->files_count,
+                    'created_at' => $u->created_at,
+                ];
+            });
+
+        return response()->json(['data' => $users]);
+    }
 }

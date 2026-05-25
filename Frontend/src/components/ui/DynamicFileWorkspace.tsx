@@ -19,11 +19,13 @@ export interface WorkspaceFile {
   url: string;
   size?: string;
   content?: string;
+  isOwner?: boolean;
 }
 
 interface DynamicFileWorkspaceProps {
   file: WorkspaceFile | null;
   onClose: () => void;
+  onDelete?: (id: string) => void;
 }
 
 const getFileMetadata = (filename: string) => {
@@ -37,7 +39,7 @@ const getFileMetadata = (filename: string) => {
   return 'unknown';
 };
 
-export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file, onClose }) => {
+export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file, onClose, onDelete }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [fileContent, setFileContent] = useState<string>('');
@@ -196,12 +198,15 @@ export const DynamicFileWorkspace: React.FC<DynamicFileWorkspaceProps> = ({ file
     <AnimatePresence>
       {file && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 bg-black/80 backdrop-blur-md">
-          <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className={cn("bg-omni-black-lighter border border-white/10 flex flex-col overflow-hidden shadow-2xl relative transition-all duration-300", isFullscreen ? "fixed inset-2 md:inset-4 rounded-xl" : "w-full max-w-6xl aspect-16/10 rounded-3xl")}>
+          <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className={cn("bg-omni-black-lighter border border-white/10 flex flex-col overflow-hidden shadow-2xl relative transition-all duration-300", isFullscreen ? "fixed inset-0 rounded-none w-full h-full" : "w-full max-w-6xl aspect-16/10 rounded-3xl")}>
             <div className="h-14 border-b border-white/10 flex items-center justify-between px-4 bg-black/20 select-none">
               <div className="flex items-center gap-3">
                 <div className="font-medium text-white truncate max-w-50 sm:max-w-xs">{file.name}</div>
               </div>
               <div className="flex items-center gap-2">
+                {file.isOwner && onDelete && (
+                  <button onClick={() => { if(confirm('Delete this file?')) { onDelete(file.id); onClose(); } }} className="px-3 py-1 bg-red-500/20 text-red-500 rounded text-xs font-bold hover:bg-red-500/30 mr-2">Delete</button>
+                )}
                 <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-2 hover:bg-white/10 rounded-lg text-omni-silver-dark transition-colors">{isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
                 <button onClick={onClose} className="p-2 hover:bg-red-500/20 hover:text-red-500 rounded-lg text-omni-silver-dark transition-colors"><X className="w-4 h-4" /></button>
               </div>
