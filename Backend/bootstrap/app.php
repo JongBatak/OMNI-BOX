@@ -40,4 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 401);
             }
         });
+
+        // Catch Payload Too Large exceptions from Laravel
+        $exceptions->renderable(function (\Illuminate\Http\Exceptions\PostTooLargeException $e) {
+            return response()->json([
+                'message' => 'File exceeds server post_max_size limit. Please update php.ini on your production server.',
+            ], 413);
+        });
     })->create();
