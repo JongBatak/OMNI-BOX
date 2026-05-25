@@ -37,8 +37,13 @@ class GalleryController extends Controller
      */
     public function getCommunityGallery(Request $request)
     {
+        $userId = $request->user()->id;
+
         $query = File::with(['user:id,name,email', 'comments.user:id,name'])
             ->withCount('likes')
+            ->withExists(['likes as is_liked' => function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }])
             ->where('is_community_shared', true);
 
         if ($request->has('search') && $request->search !== '') {

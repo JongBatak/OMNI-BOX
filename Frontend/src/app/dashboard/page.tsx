@@ -123,6 +123,7 @@ interface ApiFile {
   updated_at?: string;
   url: string;
   likes_count?: number;
+  is_liked?: boolean;
   comments?: any[];
   user?: {
     id: string;
@@ -233,6 +234,7 @@ const PersonalGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFil
 const CommunityGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFile) => void }) => {
   const [files, setFiles] = useState<ApiFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedCommentFileId, setExpandedCommentFileId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -305,35 +307,87 @@ const CommunityGalleryView = ({ onFileClick }: { onFileClick: (file: WorkspaceFi
                   </div>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-4">
-                  <div className="flex items-center gap-1 group/btn cursor-pointer" onClick={async () => {
+                  <div className="flex items-center gap-1 group/btn cursor-pointer" onClick={async (e) => {
+                     e.stopPropagation();
+                     const token = localStorage.getItem('omnibox_token');
+                     const wasLiked = file.is_liked;
+                     
+                     // Optimistic UI update
+                     setFiles(files.map(f => f.id === file.id ? { 
+                       ...f, 
+                       is_liked: !wasLiked, 
+                       likes_count: (f.likes_count || 0) + (wasLiked ? -1 : 1) 
+                     } : f));
+
                      try {
-                        const token = localStorage.getItem('omnibox_token');
-                        await fetch(`/api/v1/files/${file.id}/like`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
-                        setFiles(files.map(f => f.id === file.id ? { ...f, likes_count: (f.likes_count || 0) + 1 } : f));
-                     } catch(e) {}
-                  }}>
-                    <Heart className="w-4 h-4 text-omni-silver-dark hover:text-red-500 transition-colors" />
-                    <span className="text-[10px] text-omni-silver-dark font-bold">{file.likes_count || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1 group/btn cursor-pointer" onClick={async () => {
-                     const content = window.prompt("Enter your comment:");
-                     if (content) {
-                        try {
-                          const token = localStorage.getItem('omnibox_token');
-                          await fetch(`/api/v1/files/${file.id}/comments`, { 
-                            method: 'POST', 
-                            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content })
-                          });
-                          setFiles(files.map(f => f.id === file.id ? { ...f, comments: [...(f.comments || []), { content }] } : f));
-                        } catch(e) {}
+                       if (wasLiked) {
+                         await fetch(`/api/v1/files/${file.id}/like`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                       } else {
+                         await fetch(`/api/v1/files/${file.id}/like`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+                       }
+                     } catch(err) {
+                       // Revert on error
+                       setFiles(files.map(f => f.id === file.id ? { 
+                         ...f, 
+                         is_liked: wasLiked, 
+                         likes_count: (f.likes_count || 0) + (wasLiked ? 1 : -1) 
+                       } : f));
                      }
                   }}>
-                    <MessageCircle className="w-4 h-4 text-omni-silver-dark hover:text-omni-cyan transition-colors" />
+                    <Heart className={cn("w-4 h-4 transition-colors", file.is_liked ? "text-red-500 fill-red-500" : "text-omni-silver-dark group-hover/btn:text-red-500")} />
+                    <span className="text-[10px] text-omni-silver-dark font-bold">{file.likes_count || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1 group/btn cursor-pointer" onClick={(e) => {
+                     e.stopPropagation();
+                     setExpandedCommentFileId(expandedCommentFileId === file.id ? null : file.id);
+                  }}>
+                    <MessageCircle className={cn("w-4 h-4 transition-colors", expandedCommentFileId === file.id ? "text-omni-cyan" : "text-omni-silver-dark group-hover/btn:text-omni-cyan")} />
                     <span className="text-[10px] text-omni-silver-dark font-bold">{(file.comments || []).length}</span>
                   </div>
                 </div>
               </div>
+
+              <AnimatePresence>
+                {expandedCommentFileId === file.id && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-white/10 mt-4 pt-4 overflow-hidden">
+                    <div className="max-h-40 overflow-y-auto space-y-3 mb-3 pr-2 custom-scrollbar">
+                      {(file.comments || []).length === 0 ? (
+                        <p className="text-xs text-omni-silver-dark italic">No comments yet. Be the first!</p>
+                      ) : (
+                        (file.comments || []).map((c: any, idx: number) => (
+                          <div key={idx} className="bg-black/20 rounded-lg p-2 text-xs flex gap-2">
+                            <span className="font-bold text-white flex-shrink-0">{c.user?.name || 'User'}:</span>
+                            <span className="text-omni-silver break-words">{c.content}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <form onClick={(e) => e.stopPropagation()} onSubmit={async (e) => {
+                      e.preventDefault();
+                      const input = (e.target as any).elements.commentInput;
+                      const content = input.value.trim();
+                      if (!content) return;
+                      
+                      try {
+                        const token = localStorage.getItem('omnibox_token');
+                        input.value = '';
+                        const res = await fetch(`/api/v1/files/${file.id}/comments`, { 
+                          method: 'POST', 
+                          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ content })
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setFiles(files.map(f => f.id === file.id ? { ...f, comments: [...(f.comments || []), data.data] } : f));
+                        }
+                      } catch(err) {}
+                    }} className="flex gap-2 relative">
+                      <input name="commentInput" type="text" placeholder="Add a comment..." className="flex-1 bg-black/40 border border-white/10 rounded-full py-1.5 px-4 text-xs text-white focus:outline-none focus:border-omni-cyan transition-colors" />
+                      <button type="submit" className="bg-omni-cyan/20 text-omni-cyan hover:bg-omni-cyan/30 px-3 rounded-full text-xs font-bold transition-colors">Send</button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>
@@ -597,8 +651,14 @@ export default function CustomerDashboard() {
       if (res.ok) {
         window.location.reload(); 
       } else {
-        const err = await res.json();
-        alert('Upload failed: ' + (err.message || 'Unknown error'));
+        let errMessage = 'Unknown error';
+        try {
+          const err = await res.json();
+          errMessage = err.message || JSON.stringify(err);
+        } catch(e) {
+          errMessage = 'Server returned an invalid response (likely file too large for server limit).';
+        }
+        alert('Upload failed: ' + errMessage);
       }
     } catch (err) {
       alert('Upload failed: ' + err);
